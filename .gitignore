@@ -1,0 +1,17 @@
+/limine-binary
+/limine-binary.tar.gz
+/edk2-ovmf-bins
+/edk2-ovmf-bins.tar.gz
+/iso_root
+*.iso
+*.hdd
+compile_commands.json
+
+kernel/compile_commands.json
+kernel/.cache
+kernel/.deps-obtained
+kernel/freestanding-*
+kernel/cc-runtime
+kernel/limine-protocol
+kernel/bin-*
+kernel/obj-*
