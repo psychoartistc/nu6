@@ -9,8 +9,8 @@ PREFIX := /usr/local
 
 CFLAGS := -g -O2 -pipe -DPAGE_ALLOC_USE_LLFREE
 
-TOOLCHAIN := llvm
-TOOLCHAIN_PREFIX :=
+TOOLCHAIN := 
+TOOLCHAIN_PREFIX := x86_64-elf-
 ifneq ($(TOOLCHAIN),)
     ifeq ($(TOOLCHAIN_PREFIX),)
         TOOLCHAIN_PREFIX := $(TOOLCHAIN)-
@@ -28,12 +28,8 @@ endif
 ifeq ($(TOOLCHAIN),llvm)
     CC := clang
     CXX := clang++
+		#override CFLAGS += -D_Atomic=
 endif
-
-ifeq ($(TOOLCHAIN),)
-	override CFLAGS += -D_Atomic=
-endif
-
 
 CXXFLAGS := $(CFLAGS)
 
@@ -43,7 +39,6 @@ override CXXFLAGS := $(CXXFLAGS)
 CPPFLAGS :=
 
 NASMFLAGS := -g
-
 
 LDFLAGS :=
 
@@ -98,7 +93,7 @@ override CFLAGS += \
 override CXXFLAGS += \
     -Wall \
     -Wextra \
-    -std=gnu++23 \
+    -std=c++23 \
     -fno-rtti \
     -fno-exceptions
 

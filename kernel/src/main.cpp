@@ -1,6 +1,10 @@
+
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdnoreturn.h>
 
-void kmain() {
+extern "C" void kmain() {
+
   for (;;)
     asm volatile("hlt");
 }
