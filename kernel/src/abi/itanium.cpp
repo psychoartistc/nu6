@@ -1,6 +1,15 @@
 #include <abi/itanium.hpp>
 #include <atomic>
 
+namespace cxxabi {
+
+void call_global_ctors() {
+  for (std::size_t i = 0; &__init_array[i] != __init_array_end; i++) {
+    __init_array[i]();
+  }
+}
+} // namespace cxxabi
+
 extern "C" {
 int __cxa_atexit(void (*)(void *), void *, void *) { return 0; }
 void __cxa_pure_virtual() { arch::hcf(); }

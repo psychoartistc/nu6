@@ -3,12 +3,16 @@
 #include <cstdint>
 #include <arch/control.hpp>
 
+extern "C" {
+extern void (*__init_array[])();
+extern void (*__init_array_end[])();
+}
+
 namespace cxxabi {
 static inline constexpr std::uint64_t INITIALIZED_MASK = 1ULL << 0;
 static inline constexpr std::uint64_t LOCKED_MASK = 1ULL << 1;
 
-extern void (*__init_array[])();
-extern void (*__init_array_end[])();
+void call_global_ctors();
 
 } // namespace cxxabi
 
