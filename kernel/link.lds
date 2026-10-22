@@ -49,10 +49,10 @@ SECTIONS
         *(.data .data.*)
     } :data
 
-    .drivers : SUBALIGN(1) {
-        __drivers_start = .;
-        KEEP(*(.drivers))
-        __drivers_end = .;
+    .services : SUBALIGN(1) {
+        __services_start = .;
+        KEEP(*(.services))
+        __services_end = .;
     } :data
 
     .bss : {
