@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <arch/irq/common.hpp>
 #include <arch/control.hpp>
 #include <atomic>
@@ -32,6 +33,15 @@ public:
 
     if (rflags & (1 << 9))
       arch::irq_enable();
+  }
+
+  std::optional<std::uint64_t> try_lock() noexcept {
+    std::uint64_t rflags = arch::irq::read_rflags();
+
+    if (m_locked.test_and_set(std::memory_order_acquire))
+      return std::nullopt;
+
+    return rflags;
   }
 };
 
