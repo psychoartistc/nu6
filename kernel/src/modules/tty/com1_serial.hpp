@@ -4,6 +4,7 @@
 #include <std/spinlock.hpp>
 
 namespace module {
+// TODO: make a tty
 class com1_serial {
 private:
   static inline constexpr std::uint64_t COM1 = 0x3F8;

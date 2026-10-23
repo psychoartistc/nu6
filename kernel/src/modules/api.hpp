@@ -45,17 +45,18 @@ struct module {
 void initialize_some(module_init_order order);
 } // namespace module
 
-#define MODULE_SECTION __attribute__((section(".modules"), used, aligned(8)))
+#define MODULE_SECTION
 
 #define REGISTER_MODULE(symbol, module_name, module_description,               \
                         module_version, module_license, module_order,          \
                         init_function, exit_function)                          \
-  static module::module symbol MODULE_SECTION = {.name = module_name,          \
-                                                 .description =                \
-                                                     module_description,       \
-                                                 .version = module_version,    \
-                                                 .license = module_license,    \
-                                                 .init = init_function,        \
-                                                 .exit = exit_function,        \
-                                                 .order = module_order,        \
-                                                 .initialized = false}
+  [[gnu::section(".modules"), gnu::used,                                       \
+    gnu::aligned(8)]] static module::module symbol = {                         \
+      .name = module_name,                                                     \
+      .description = module_description,                                       \
+      .version = module_version,                                               \
+      .license = module_license,                                               \
+      .init = init_function,                                                   \
+      .exit = exit_function,                                                   \
+      .order = module_order,                                                   \
+      .initialized = false}

@@ -80,9 +80,7 @@ static void serial_log_handler(logging::log_level level, std::string_view name,
   if (level != logging::log_level::printk && name.data() && name.size() >= 1) {
     s_serial.putsf("[ %s ] [ %s ] [%s:%d:%d] ", lname.data(), name.data(),
                    loc.file_name(), loc.line(), loc.column());
-  } else if (level != logging::log_level::printk &&
-             (!name.data() || name.size() < 0)) {
-
+  } else if (level != logging::log_level::printk && (!name.data())) {
     s_serial.putsf("[ %s ] [%s:%d:%d] ", lname.data(), loc.file_name(),
                    loc.line(), loc.column());
   }
