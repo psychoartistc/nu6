@@ -68,4 +68,14 @@ int memcmp(const void *s1, const void *s2, std::size_t n) {
 
   return 0;
 }
+
+size_t strlen(const char *s1) {
+  size_t length = 0;
+
+  while (s1[length] != '\0') {
+    length++;
+  }
+
+  return length;
+}
 }

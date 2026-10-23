@@ -1,5 +1,6 @@
 #include <logging/logging.hpp>
 #include <std/lock_guard.hpp>
+#include <std/memory.hpp>
 
 namespace logging {
 

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <functional>
 #include <cstdarg>
 #include <source_location>
 #include <array>
 #include <std/spinlock.hpp>
 #include <string_view>
+#include <functional>
 
 namespace logging {
 enum class log_level {
@@ -170,45 +170,45 @@ private:
 } // namespace logging
 
 #define pr_trace(fmt, ...)                                                     \
-  lib::log_manager::poll_log(lib::log_level::trace, {},                        \
-                             std::source_location::current(),                  \
-                             fmt, ##__VA_ARGS__)
+  logging::log_manager::poll_log(logging::log_level::trace, {},                \
+                                 std::source_location::current(),              \
+                                 fmt, ##__VA_ARGS__)
 
 #define pr_note(fmt, ...)                                                      \
-  lib::log_manager::poll_log(lib::log_level::note, {},                         \
-                             std::source_location::current(),                  \
-                             fmt, ##__VA_ARGS__)
+  logging::log_manager::poll_log(logging::log_level::note, {},                 \
+                                 std::source_location::current(),              \
+                                 fmt, ##__VA_ARGS__)
 
 #define pr_debug(fmt, ...)                                                     \
-  lib::log_manager::poll_log(lib::log_level::debug, {},                        \
-                             std::source_location::current(),                  \
-                             fmt, ##__VA_ARGS__)
+  logging::log_manager::poll_log(logging::log_level::debug, {},                \
+                                 std::source_location::current(),              \
+                                 fmt, ##__VA_ARGS__)
 
 #define pr_info(fmt, ...)                                                      \
-  lib::log_manager::poll_log(lib::log_level::info, {},                         \
-                             std::source_location::current(),                  \
-                             fmt, ##__VA_ARGS__)
+  logging::log_manager::poll_log(logging::log_level::info, {},                 \
+                                 std::source_location::current(),              \
+                                 fmt, ##__VA_ARGS__)
 
 #define pr_warn(fmt, ...)                                                      \
-  lib::log_manager::poll_log(lib::log_level::warn, {},                         \
-                             std::source_location::current(),                  \
-                             fmt, ##__VA_ARGS__)
+  logging::log_manager::poll_log(logging::log_level::warn, {},                 \
+                                 std::source_location::current(),              \
+                                 fmt, ##__VA_ARGS__)
 
 #define pr_error(fmt, ...)                                                     \
-  lib::log_manager::poll_log(lib::log_level::error, {},                        \
-                             std::source_location::current(),                  \
-                             fmt, ##__VA_ARGS__)
+  logging::log_manager::poll_log(logging::log_level::error, {},                \
+                                 std::source_location::current(),              \
+                                 fmt, ##__VA_ARGS__)
 
 #define pr_critical(fmt, ...)                                                  \
-  lib::log_manager::poll_log(lib::log_level::critical, {},                     \
-                             std::source_location::current(),                  \
-                             fmt, ##__VA_ARGS__)
+  logging::log_manager::poll_log(logging::log_level::critical, {},             \
+                                 std::source_location::current(),              \
+                                 fmt, ##__VA_ARGS__)
 
 #define printk(fmt, ...)                                                       \
-  lib::log_manager::poll_log(lib::log_level::printk, {},                       \
-                             std::source_location::current(),                  \
-                             fmt, ##__VA_ARGS__)
+  logging::log_manager::poll_log(logging::log_level::printk, {},               \
+                                 std::source_location::current(),              \
+                                 fmt, ##__VA_ARGS__)
 
 #define vprintk(fmt, va)                                                       \
-  lib::log_manager::vpoll_log(lib::log_level::printk, {},                      \
-                              std::source_location::current(), fmt, va)
+  logging::log_manager::vpoll_log(logging::log_level::printk, {},              \
+                                  std::source_location::current(), fmt, va)

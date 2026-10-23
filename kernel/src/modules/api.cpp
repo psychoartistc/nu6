@@ -8,10 +8,8 @@ extern module __modules_end[];
 
 void initialize_some(module_init_order order) {
   for (module *current = __modules_start; current < __modules_end; ++current) {
-    if (!current)
-      continue;
-
-    if (!current->initialized && current->order == order) {
+    if (current && !current->initialized && current->order == order &&
+        current->init) {
       current->init();
       current->initialized = true;
     }
