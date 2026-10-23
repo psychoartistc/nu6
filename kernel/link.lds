@@ -49,10 +49,10 @@ SECTIONS
         *(.data .data.*)
     } :data
 
-    .services : SUBALIGN(1) {
-        __services_start = .;
-        KEEP(*(.services))
-        __services_end = .;
+    .modules : SUBALIGN(1) {
+        __modules_start = .;
+        KEEP(*(.modules))
+        __modules_end = .;
     } :data
 
     .bss : {

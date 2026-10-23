@@ -8,9 +8,6 @@
 extern "C" void kmain() {
   cxxabi::call_global_ctors();
 
-  char a[4];
-  memset(a, 0, 4);
-
   for (;;)
     asm volatile("hlt");
 }
