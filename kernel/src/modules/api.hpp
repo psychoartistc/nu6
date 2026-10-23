@@ -44,7 +44,7 @@ void init_all(module_init_order order);
 
 #define MODULE_SECTION __attribute__((section(".modules"), used, aligned(8)))
 
-#define REGISTER_module(symbol, module_name, module_description,               \
+#define REGISTER_MODULE(symbol, module_name, module_description,               \
                         module_version, module_license, module_order,          \
                         init_function, exit_function)                          \
   static modules::module symbol MODULE_SECTION = {.name = module_name,         \
