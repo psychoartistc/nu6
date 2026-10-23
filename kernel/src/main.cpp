@@ -1,4 +1,6 @@
 #include <std/memory.hpp>
+#include <std/enums.hpp>
+#include <mm/physical/page_allocator.hpp>
 #include <arch/tables/gdt.hpp>
 #include <logging/logging.hpp>
 #include <modules/api.hpp>
@@ -15,7 +17,8 @@ extern "C" void kmain() {
   cxxabi::call_global_ctors();
   module::initialize_some(module::module_init_order::urgent);
 
-  // arch::tss tss;
+  std::string_view res = std::enum_name<>();
+  pr_info("%.*s", res.size(), res.data());
 
   arch::hcf();
 }

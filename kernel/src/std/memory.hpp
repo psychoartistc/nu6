@@ -9,6 +9,7 @@ void *memset(void *s, int c, std::size_t n);
 void *memmove(void *dest, const void *src, std::size_t n);
 int memcmp(const void *s1, const void *s2, std::size_t n);
 size_t strlen(const char *s);
+void *memchr(const void *s1, int c, size_t n);
 }
 
 #define memcpy __builtin_memcpy
