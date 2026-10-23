@@ -7,7 +7,5 @@
 
 extern "C" void kmain() {
   cxxabi::call_global_ctors();
-
-  for (;;)
-    asm volatile("hlt");
+  arch::hcf();
 }

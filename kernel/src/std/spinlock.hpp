@@ -7,6 +7,28 @@
 
 namespace std {
 
+class spinlock_mutex {
+private:
+  std::atomic_flag flag = ATOMIC_FLAG_INIT;
+
+public:
+  void lock() noexcept {
+    while (flag.test(std::memory_order_relaxed)) {
+      arch::pause();
+    }
+
+    while (flag.test_and_set(std::memory_order_acquire)) {
+      arch::pause();
+    }
+  }
+
+  bool try_lock() noexcept {
+    return !flag.test_and_set(std::memory_order_acquire);
+  }
+
+  void unlock() noexcept { flag.clear(std::memory_order_release); }
+};
+
 class spinlock_mutex_irq {
 private:
   std::atomic_flag m_locked = ATOMIC_FLAG_INIT;
