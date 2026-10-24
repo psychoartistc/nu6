@@ -17,8 +17,5 @@ extern "C" void kmain() {
   cxxabi::call_global_ctors();
   module::initialize_some(module::module_init_order::urgent);
 
-  std::string_view res = std::enum_name<>();
-  pr_info("%.*s", res.size(), res.data());
-
   arch::hcf();
 }

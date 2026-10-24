@@ -9,7 +9,7 @@ concept is_enum_val = std::is_enum_v<decltype(V)>;
 
 template <auto V>
 constexpr std::string_view enum_name()
-  requires is_enum_val<V>
+
 {
   std::string_view name = __PRETTY_FUNCTION__;
 

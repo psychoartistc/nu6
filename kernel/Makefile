@@ -7,7 +7,7 @@ override OUTPUT := kernel
 
 PREFIX := /usr/local
 
-CFLAGS := -g -O2 -pipe -DPAGE_ALLOC_USE_LLFREE -D__noreturn__=
+CFLAGS := -g -O2 -pipe -DPAGE_ALLOC_USE_FREELIST -D__noreturn__=
 
 TOOLCHAIN := 
 TOOLCHAIN_PREFIX := x86_64-elf-

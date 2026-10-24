@@ -17,5 +17,7 @@ public:
 
   static std::expected<std::uintptr_t, error_code>
   allocate(std::uint64_t count);
+
+  static bool free(std::uintptr_t at, std::uint64_t count);
 };
 } // namespace mm
