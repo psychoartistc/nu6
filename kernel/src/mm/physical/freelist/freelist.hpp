@@ -13,18 +13,25 @@ private:
   // seq_cst
   std::atomic<std::uint64_t> m_totalFrames;
 
-  // acq, rel
+  // relaxed
   std::atomic<std::uint64_t> m_freeFrames;
 
+  std::spinlock_mutex m_mutex;
+
+  // seq_cst
+  std::atomic<bool> m_bNotEmpty = false;
+
 public:
-  void load();
+  bool reclaim_type(std::uint64_t type);
 
   std::expected<std::uintptr_t, mm::page_allocator::error_code> pop();
-  bool push();
+  bool push(std::uintptr_t page);
 
-  std::uint64_t total_frames() const {
-    return m_totalFrames.load(std::memory_order_acquire);
+  std::uint64_t free_frames() const {
+    return m_freeFrames.load(std::memory_order_relaxed);
   }
+
+  std::uint64_t total_frames() const { return m_totalFrames.load(); }
 };
 
 } // namespace mm
