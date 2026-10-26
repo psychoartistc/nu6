@@ -1,5 +1,6 @@
 #pragma once
 
+#include <std/lock_guard.hpp>
 #include <std/spinlock.hpp>
 #include <mm/physical/page_allocator.hpp>
 #include <utils/panic.hpp>
@@ -106,6 +107,8 @@ public:
 
 struct vma {
   std::uintptr_t address;
+
+  // num of pages
   std::uint64_t count;
 };
 
@@ -136,11 +139,42 @@ private:
   std::spinlock_mutex m_mtx{};
 
 public:
-  vma_tree(std::uintptr_t vasStart, std::uintptr_t vasEnd) {}
+  vma_tree(std::uintptr_t vasStart, std::uintptr_t vasEnd)
+    requires(vasStart < vasEnd)
+      : m_vasStart((vasStart + PAGE_SIZE - 1) & ~std::uintptr_t(PAGE_SIZE - 1)),
+        m_vasEnd(vasEnd & ~std::uintptr_t(PAGE_SIZE - 1)) {}
 
   // used in demand paging
-  vma &find(std::uintptr_t address) {}
+  vma &find(std::uintptr_t address) {
+    std::lock_guard<std::spinlock_mutex> lock(m_mtx);
+    auto it = m_rbtree.find(address);
+    return it == m_rbtree.end() ? nullptr : &*it;
+  }
 
-  vma allocate(std::size_t size) {}
+  vma allocate(std::size_t size) {
+    if (size == 0 || size > ~std::size_t(0) - (PAGE_SIZE - 1))
+      return {};
+
+    std::uint64_t pages = (size + PAGE_SIZE - 1) / PAGE_SIZE;
+
+    std::lock_guard<std::spinlock_mutex> lock(m_mtx);
+    std::uintptr_t cursor = m_vasStart;
+
+    for (auto it = m_rbtree.begin();; ++it) {
+      bool at_end = (it == m_rbtree.end());
+      std::uintptr_t limit = at_end ? m_vasEnd : it->address;
+
+      if (limit > cursor && (limit - cursor) / PAGE_SIZE >= pages) {
+        vma v{cursor, pages};
+        m_rbtree.emplace_hint(it, v);
+        return v;
+      }
+
+      if (at_end)
+        return {};
+
+      cursor = it->address + it->count * PAGE_SIZE;
+    }
+  }
 };
 } // namespace mm
