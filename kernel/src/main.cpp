@@ -1,4 +1,5 @@
 #include <std/memory.hpp>
+#include <mm/virtual/vma_tree.hpp>
 #include <utils/math.hpp>
 #include <limine.h>
 #include <std/enums.hpp>
@@ -67,12 +68,10 @@ extern "C" void kmain() {
   else
     pr_info("0x%p", *res);
 
-  std::rb_tree<int, std::rb_identity, std::less<>, bump_allocator<int>> rb;
-  rb.insert(123);
-  rb.insert(5050);
-  for (int i : rb) {
-    pr_info("%d", i);
-  }
+  mm::vma_tree<mm::pool_allocator<mm::vma>> tree{0x0, 0xFFFFFF};
+  auto vma = tree.allocate(4096);
+  pr_info("0x%p -> 0x%p", vma->address,
+          vma->address + vma->count * mm::PAGE_SIZE);
 
   arch::hcf();
 }

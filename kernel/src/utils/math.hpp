@@ -16,6 +16,10 @@ template <std::integral T> constexpr T div_floor(T a, T b) {
   return q;
 }
 
+template <std::integral T> static constexpr T align_up(T v, T a) noexcept {
+  return (v + a - 1) & ~(a - 1);
+}
+
 static inline constexpr bool page_aligned(std::uintptr_t ptr) {
   return (ptr & mm::PAGE_SIZE) == 0;
 }

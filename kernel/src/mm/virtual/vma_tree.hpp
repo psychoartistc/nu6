@@ -1,109 +1,16 @@
 #pragma once
 
+#include <utils/fmt.hpp>
+#include <logging/logging.hpp>
 #include <std/lock_guard.hpp>
 #include <std/spinlock.hpp>
 #include <mm/physical/page_allocator.hpp>
 #include <utils/panic.hpp>
 #include <mm/common.hpp>
 #include <std/dsa/rbtree.hpp>
+#include <mm/physical/phys_allocator.hpp>
 
 namespace mm {
-
-// WARNING: this allocator is very very terrible and is highly fragmented
-// its not for use anywhere outside:
-// temporary stubs where we dont have the kernel allocator yet
-// or in the kernel vma tree
-template <typename T> class page_bump_allocator {
-private:
-  static constexpr std::size_t align_of = alignof(T);
-
-  std::uintptr_t m_currPage{0x0};
-  std::size_t m_currPageUsed = 0;
-
-  static constexpr std::size_t align_up(std::size_t v) noexcept {
-    return (v + (align_of - 1)) & ~(align_of - 1);
-  }
-
-  bool ensure_page() noexcept {
-    if (m_currPage != 0x0)
-      return true;
-
-    auto res = mm::page_allocator::allocate(1);
-    if (!res.has_value())
-      return false;
-
-    m_currPage = *res;
-    m_currPageUsed = 0;
-    return true;
-  }
-
-  bool bump_page() noexcept {
-    auto res = mm::page_allocator::allocate(1);
-    if (!res.has_value())
-      return false;
-
-    m_currPage = *res;
-    m_currPageUsed = 0;
-    return true;
-  }
-
-public:
-  using value_type = T;
-
-  page_bump_allocator() noexcept = default;
-
-  template <typename U>
-  page_bump_allocator(const page_bump_allocator<U> &) noexcept {
-    auto res = mm::page_allocator::allocate(1);
-    assert(res.has_value());
-    m_currPage = *res;
-    m_currPageUsed = 0;
-  }
-
-  T *allocate(std::size_t n) {
-    if (n == 0)
-      return nullptr;
-
-    if (n > (static_cast<std::size_t>(-1) / sizeof(T)))
-      utils::panic("allocation size overflow");
-
-    std::size_t bytes = n * sizeof(T);
-
-    std::size_t aligned_used = align_up(m_currPageUsed);
-
-    if (bytes > PAGE_SIZE)
-      utils::panic(" single allocation exceeds page size");
-
-    if (aligned_used + bytes > PAGE_SIZE) {
-      if (!ensure_page() || !bump_page())
-        utils::panic(" out of physical pages");
-
-      aligned_used = 0;
-    }
-
-    if (!ensure_page())
-      utils::panic("failed to allocate page");
-
-    T *ptr = reinterpret_cast<T *>(mm::p2v(m_currPage + aligned_used));
-    m_currPageUsed = aligned_used + bytes;
-    return ptr;
-  }
-
-  void deallocate(T *p, std::size_t n) noexcept {
-    (void)p;
-    (void)n;
-  }
-
-  template <typename U>
-  bool operator==(const page_bump_allocator<U> &) const noexcept {
-    return true;
-  }
-
-  template <typename U>
-  bool operator!=(const page_bump_allocator<U> &) const noexcept {
-    return false;
-  }
-};
 
 struct vma {
   std::uintptr_t address;
@@ -133,27 +40,49 @@ struct vma_less {
 // userland processes should use the normal allocator
 template <class Allocator = std::allocator<vma>> class vma_tree {
 private:
+  page_pool m_pagePool{};
   std::rb_tree<vma, std::rb_identity, vma_less, Allocator> m_rbtree{};
   std::uintptr_t m_vasStart{0x0};
   std::uintptr_t m_vasEnd{0x0};
   std::spinlock_mutex m_mtx{};
+  logging::named_logger m_logger{"vma_tree"};
+
+private:
+  Allocator make_alloc() {
+    if constexpr (std::is_constructible_v<Allocator, page_pool &>)
+      return Allocator(m_pagePool);
+    else
+      return Allocator();
+  }
 
 public:
   vma_tree(std::uintptr_t vasStart, std::uintptr_t vasEnd)
-    requires(vasStart < vasEnd)
-      : m_vasStart((vasStart + PAGE_SIZE - 1) & ~std::uintptr_t(PAGE_SIZE - 1)),
-        m_vasEnd(vasEnd & ~std::uintptr_t(PAGE_SIZE - 1)) {}
+      : m_rbtree(make_alloc()),
+        m_vasStart((vasStart + PAGE_SIZE - 1) & ~std::uintptr_t(PAGE_SIZE - 1)),
+        m_vasEnd(vasEnd & ~std::uintptr_t(PAGE_SIZE - 1)) {
+    std::size_t bytes = m_vasEnd - m_vasStart;
+    std::array<char, utils::FMT_SIZE_BUFSIZE> buff{};
+    utils::fmt_size(buff, bytes);
+    m_logger.info("managing %s (%zu bytes) virtual address space", buff.data(),
+                  bytes);
+  }
+
+  vma_tree(const vma_tree &) = delete;
+  vma_tree &operator=(const vma_tree &) = delete;
+
+  std::uintptr_t address_space_start() const { return m_vasStart; }
+  std::uintptr_t address_space_end() const { return m_vasEnd; }
 
   // used in demand paging
-  vma &find(std::uintptr_t address) {
+  vma *find(std::uintptr_t address) {
     std::lock_guard<std::spinlock_mutex> lock(m_mtx);
     auto it = m_rbtree.find(address);
     return it == m_rbtree.end() ? nullptr : &*it;
   }
 
-  vma allocate(std::size_t size) {
+  std::optional<vma> allocate(std::size_t size) {
     if (size == 0 || size > ~std::size_t(0) - (PAGE_SIZE - 1))
-      return {};
+      return std::nullopt;
 
     std::uint64_t pages = (size + PAGE_SIZE - 1) / PAGE_SIZE;
 
@@ -171,10 +100,73 @@ public:
       }
 
       if (at_end)
-        return {};
+        return std::nullopt;
 
       cursor = it->address + it->count * PAGE_SIZE;
     }
+  }
+
+  //!!!size in bytes!!!
+  std::size_t erase(std::uintptr_t address, std::size_t size) {
+    if (size == 0)
+      return 0;
+
+    constexpr std::uintptr_t pmask = PAGE_SIZE - 1;
+    std::uintptr_t lo = address & ~pmask;
+
+    std::uintptr_t hi = (size - 1 > ~std::uintptr_t(0) - address)
+                            ? ~std::uintptr_t(0)
+                            : address + (size - 1);
+    hi |= pmask;
+
+    vma query{lo, (hi - lo) / PAGE_SIZE + 1};
+
+    std::lock_guard<std::spinlock_mutex> g(m_mtx);
+    auto [first, last] = m_rbtree.equal_range(query);
+    if (first == last)
+      return 0;
+
+    std::size_t touched = static_cast<std::size_t>(std::distance(first, last));
+    auto lastIt = std::prev(last);
+
+    vma &f = const_cast<vma &>(*first);
+    vma &l = const_cast<vma &>(*lastIt);
+
+    bool hasLeft = f.address < lo;
+    bool hasRight = vma_less::last(l) > hi;
+
+    std::uint64_t leftPages = hasLeft ? (lo - f.address) / PAGE_SIZE : 0;
+    std::uint64_t rightPages =
+        hasRight ? (vma_less::last(l) - hi) / PAGE_SIZE : 0;
+
+    if (first == lastIt) {
+      if (hasLeft && hasRight) {
+        f.count = leftPages;
+        m_rbtree.emplace_hint(last, vma{hi + 1, rightPages});
+      } else if (hasLeft) {
+        f.count = leftPages;
+      } else if (hasRight) {
+        f.address = hi + 1;
+        f.count = rightPages;
+      } else {
+        m_rbtree.erase(first);
+      }
+      return 1;
+    }
+
+    auto eraseFrom = first;
+    auto eraseTo = last;
+    if (hasLeft) {
+      f.count = leftPages;
+      ++eraseFrom;
+    }
+    if (hasRight) {
+      l.address = hi + 1;
+      l.count = rightPages;
+      eraseTo = lastIt;
+    }
+    m_rbtree.erase(eraseFrom, eraseTo);
+    return touched;
   }
 };
 } // namespace mm
