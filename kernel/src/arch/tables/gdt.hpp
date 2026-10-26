@@ -32,10 +32,11 @@ public:
 
   static constexpr std::uint16_t TSS_SELECTOR = 0x18;
 
+  static constexpr std::size_t GDT_ENTRIES = 7;
   static constexpr std::size_t TSS_INDEX = 3;
 
 private:
-  std::array<gdt_entry, 5> m_gdt{};
+  std::array<gdt_entry, 7> m_gdt{};
   gdt_ptr m_gdtPtr{};
   logging::named_logger m_logger{"gdt"};
 

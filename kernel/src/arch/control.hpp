@@ -5,7 +5,7 @@ static inline void irq_disable() { asm volatile("cli"); }
 static inline void irq_enable() { asm volatile("sti"); }
 static inline void pause() { asm volatile("pause"); }
 static inline void irq_wait() { asm volatile("hlt"); }
-static inline void hcf() {
+[[noreturn]] static inline void hcf() {
   for (;;)
     irq_wait();
 }
