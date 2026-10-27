@@ -2,7 +2,7 @@
 
 .DELETE_ON_ERROR:
 
-QEMUFLAGS := -m 2G -serial stdio -enable-kvm -cpu host,+tsc-deadline,+pdpe1gb,+invtsc
+QEMUFLAGS := -m 2G -serial stdio -enable-kvm -cpu host,+tsc-deadline,+pdpe1gb,+invtsc,+nx
 
 override XORRISO_BIOS_FLAGS :=
 override SGDISK_MBR_FLAGS :=
