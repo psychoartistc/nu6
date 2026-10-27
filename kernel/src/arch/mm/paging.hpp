@@ -48,5 +48,7 @@ static inline std::uint64_t read_cr2(void) {
   asm volatile("mov %%cr2, %0" : "=r"(v));
   return v;
 }
+
+bool megapages_supported();
 } // namespace mm
 } // namespace arch

@@ -168,5 +168,17 @@ public:
     m_rbtree.erase(eraseFrom, eraseTo);
     return touched;
   }
+
+  bool free(vma v) {
+    std::lock_guard<std::spinlock_mutex> s(m_mtx);
+    auto it = m_rbtree.find(v.address);
+
+    if (it == m_rbtree.end() || it->address != v.address ||
+        it->count != v.count)
+      return false;
+
+    m_rbtree.erase(it);
+    return true;
+  }
 };
 } // namespace mm

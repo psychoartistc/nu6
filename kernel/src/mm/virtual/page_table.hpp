@@ -1,5 +1,6 @@
 #pragma once
 
+#include <logging/logging.hpp>
 #include <arch/mm/nx.hpp>
 #include <mm/physical/page_allocator.hpp>
 #include <std/spinlock.hpp>
@@ -9,7 +10,8 @@
 namespace mm {
 class page_table {
 public:
-  enum class error_code { entry_exists, wxorx_violation };
+  enum class error_code { entry_exists, no_entry, wxorx_violation };
+  enum class page_type { normal, super, mega };
 
 private:
   static inline constexpr std::uint64_t protection_to_pte(protection vm) {
@@ -48,12 +50,33 @@ private:
   }
 
 private:
+  logging::named_logger m_logger{"page_table"};
   std::uintptr_t m_pml4Phys{0x0};
   std::spinlock_mutex m_mtx{};
 
 public:
   page_table();
   ~page_table();
+
+  std::expected<void, error_code> map(std::uintptr_t phys, std::uintptr_t virt,
+                                      protection prot,
+                                      page_type type = page_type::normal,
+                                      bool no_wxorx = false);
+
+  std::expected<void, error_code> unmap(std::uintptr_t virt);
+
+  std::expected<void, error_code> protect(std::uintptr_t virt, protection prot,
+                                          std::size_t pages = 1,
+                                          page_type type = page_type::normal,
+                                          bool no_wxorx = false);
+
+  std::expected<std::uintptr_t, error_code> physical_of(std::uintptr_t addr);
+
+  std::uintptr_t pml4_phys() const { return m_pml4Phys; }
+
+  void switch_to();
+
+  void tlb_flush(std::uintptr_t virt, std::size_t pages);
 };
 
 } // namespace mm
