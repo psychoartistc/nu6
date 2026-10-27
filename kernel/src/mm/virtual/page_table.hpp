@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mm/common.hpp>
 #include <logging/logging.hpp>
 #include <arch/mm/nx.hpp>
 #include <mm/physical/page_allocator.hpp>
@@ -10,7 +11,14 @@
 namespace mm {
 class page_table {
 public:
-  enum class error_code { entry_exists, no_entry, wxorx_violation };
+  enum class error_code {
+    entry_exists,
+    no_entry,
+    wxorx_violation,
+    no_memory,
+    bad_address,
+    unsupported
+  };
   enum class page_type { normal, super, mega };
 
 private:
@@ -49,6 +57,19 @@ private:
                 : 0);
   }
 
+  static inline std::size_t page_idx(std::uintptr_t virt, int level) {
+    return (virt >> (12 + 9 * (level - 1))) & 0x1FF;
+  }
+
+  static inline std::uint64_t *table_of(std::uint64_t entry) {
+    return reinterpret_cast<std::uint64_t *>(p2v(entry & arch::mm::MASK_4K));
+  }
+
+  std::expected<std::uintptr_t, page_allocator::error_code> alloc_table();
+  std::expected<std::uintptr_t *, error_code> walk(std::uintptr_t to);
+  std::expected<void, error_code>
+  clone_level(std::uint64_t *dst, const std::uint64_t *src, int level);
+
 private:
   logging::named_logger m_logger{"page_table"};
   std::uintptr_t m_pml4Phys{0x0};
@@ -77,6 +98,8 @@ public:
   void switch_to();
 
   void tlb_flush(std::uintptr_t virt, std::size_t pages);
+
+  void clone_bootloader_pages();
 };
 
 } // namespace mm

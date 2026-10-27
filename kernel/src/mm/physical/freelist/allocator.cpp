@@ -1,8 +1,5 @@
-#include "limine.h"
-#ifdef PAGE_ALLOC_USE_FREELIST
-
 // #include <mm/physical/page_allocator.hpp>
-
+#include <utils/fmt.hpp>
 #include <mm/common.hpp>
 #include <mm/physical/freelist/freelist.hpp>
 #include <limine/requests.hpp>
@@ -27,6 +24,13 @@ bool freelist_allocator::reclaim_type(std::uint64_t type) {
       push(pageStart);
     }
   }
+
+  std::array<char, utils::FMT_SIZE_BUFSIZE> buf{};
+  utils::fmt_size(buf, free_frames() * PAGE_SIZE);
+
+  m_logger.info(
+      "successfully reclaimed %zu pages (%s physical memory) of type %zu",
+      free_frames(), buf.data(), type);
 
   return true;
 }
@@ -67,6 +71,8 @@ bool freelist_allocator::push(std::uintptr_t page) {
 
   return true;
 }
+
+#ifdef PAGE_ALLOC_USE_FREELIST
 
 static freelist_allocator s_freelist{};
 

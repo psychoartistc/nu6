@@ -18,12 +18,19 @@
 #include <arch/tables/ist.hpp>
 #include <std/dsa/rbtree.hpp>
 #include <mm/physical/freelist/freelist.hpp>
+#include <mm/virtual/page_table.hpp>
 
 extern "C" void kmain() {
   cxxabi::call_global_ctors();
   module::initialize_some(module::module_init_order::urgent);
 
-  mm::page_allocator::initialize();
+  bool r = mm::page_allocator::initialize();
+  if (!r)
+    utils::panic("failed to initialize page allocator");
+
+  mm::page_table pt;
+  pt.clone_bootloader_pages();
+  pt.switch_to();
 
   auto res = mm::page_allocator::allocate(1);
   if (!res)
