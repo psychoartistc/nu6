@@ -9,6 +9,10 @@
 #include <mm/virtual/protection.hpp>
 
 namespace mm {
+namespace tlb {
+class flush_batch;
+}
+
 class page_table {
 public:
   enum class error_code {
@@ -100,6 +104,9 @@ private:
 
   bool set_leaf_protect(std::uint64_t *e, int level, protection prot);
 
+  static std::expected<void, error_code> check_range(std::uintptr_t start,
+                                                     std::size_t pages);
+
 private:
   logging::named_logger m_logger{"page_table"};
   std::uintptr_t m_pml4Phys{0x0};
@@ -114,8 +121,6 @@ public:
                                       page_type type = page_type::normal,
                                       bool no_wxorx = false);
 
-  std::expected<void, error_code> unmap(std::uintptr_t virt);
-
   std::expected<void, error_code> protect(std::uintptr_t virt, protection prot,
                                           std::size_t pages = 1,
                                           bool no_wxorx = false);
@@ -126,7 +131,9 @@ public:
 
   void switch_to();
 
-  void tlb_flush(std::uintptr_t virt, std::size_t pages);
+  std::expected<void, error_code> unmap(std::uintptr_t virt,
+                                        std::size_t pages = 1);
+  void tlb_flush(const tlb::flush_batch &batch);
 
   void clone_bootloader_pages();
 };

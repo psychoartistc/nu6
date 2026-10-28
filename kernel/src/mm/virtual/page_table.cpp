@@ -8,12 +8,6 @@
 #include <mm/virtual/tlb.hpp>
 
 namespace mm {
-void page_table::tlb_flush(std::uintptr_t virt, std::size_t pages) {
-  for (size_t i = 0; i < pages; i++)
-    arch::mm::invlpg(virt + i * mm::PAGE_SIZE);
-
-  tlb::on_shootdown(*this, virt, pages);
-}
 
 std::expected<std::uintptr_t, page_allocator::error_code>
 page_table::alloc_table() {
@@ -88,6 +82,30 @@ void page_table::clone_bootloader_pages() {
   if (!res)
     utils::panic("error when cloning bootloader pages: %d",
                  static_cast<int>(res.error()));
+}
+
+void page_table::tlb_flush(const tlb::flush_batch &batch) {
+  if (batch.empty())
+    return;
+
+  tlb::flush_local(batch);
+  tlb::on_shootdown(*this, batch);
+}
+
+std::expected<void, page_table::error_code>
+page_table::check_range(std::uintptr_t start, std::size_t pages) {
+  if (start & (PAGE_SIZE - 1))
+    return std::unexpected<error_code>(error_code::bad_address);
+
+  if (pages > (std::numeric_limits<std::uintptr_t>::max() / PAGE_SIZE) ||
+      start + pages * PAGE_SIZE < start)
+    return std::unexpected<error_code>(error_code::bad_address);
+
+  if (!page_is_canonical(start) ||
+      !page_is_canonical(start + pages * PAGE_SIZE - 1))
+    return std::unexpected<error_code>(error_code::bad_address);
+
+  return {};
 }
 
 void page_table::switch_to() {
@@ -217,30 +235,6 @@ page_table::map(std::uintptr_t phys, std::uintptr_t virt, protection prot,
 }
 
 std::expected<void, page_table::error_code>
-page_table::unmap(std::uintptr_t virt) {
-  if (!page_is_canonical(virt))
-    return std::unexpected<error_code>(error_code::bad_address);
-
-  std::lock_guard<std::spinlock_mutex> lock(m_mtx);
-
-  auto res = find_leaf(virt, false);
-  if (!res)
-    return std::unexpected<error_code>(res.error());
-
-  if (virt & ((pages_level(res->second) * PAGE_SIZE) - 1))
-    return std::unexpected<error_code>(error_code::bad_address);
-
-  std::atomic_ref<std::uint64_t> entry(*res->first);
-
-  entry.store(0, std::memory_order_release);
-
-  arch::mm::invlpg(virt);
-  tlb_flush(virt, 1);
-
-  return std::expected<void, page_table::error_code>();
-}
-
-std::expected<void, page_table::error_code>
 page_table::split_leaf(std::uint64_t *e, int level) {
   assert(level == 2 || level == 3 && "attempted to split a 4k page");
 
@@ -301,72 +295,121 @@ page_table::protect(std::uintptr_t start, protection prot, std::size_t pages,
     return std::unexpected<error_code>(error_code::wxorx_violation);
 
   if (pages == 0)
-    return std::expected<void, error_code>();
+    return {};
 
-  if (start & (PAGE_SIZE - 1))
-    return std::unexpected<error_code>(error_code::bad_address);
+  if (auto r = check_range(start, pages); !r)
+    return r;
 
-  if (pages > (std::numeric_limits<std::uintptr_t>::max() / PAGE_SIZE) ||
-      start + pages * PAGE_SIZE < start)
-    return std::unexpected<error_code>(error_code::bad_address);
+  const bool user = !protection_has_flag(prot, protection::kernel);
 
-  if (!page_is_canonical(start) ||
-      !page_is_canonical(start + pages * PAGE_SIZE - 1))
-    return std::unexpected<error_code>(error_code::bad_address);
-
-  bool user = !protection_has_flag(prot, protection::kernel);
-  std::lock_guard<std::spinlock_mutex> lock(m_mtx);
+  tlb::flush_batch batch;
+  std::optional<error_code> ec;
 
   {
+    std::lock_guard<std::spinlock_mutex> lock(m_mtx);
+
+    {
+      std::uintptr_t virt = start;
+      std::size_t rem = pages;
+      while (rem) {
+        auto res = find_leaf(virt, false);
+        if (!res)
+          return std::unexpected<error_code>(res.error());
+        std::size_t n = pages_chunk(virt, res->second, rem);
+        virt += n * PAGE_SIZE;
+        rem -= n;
+      }
+    }
+
     std::uintptr_t virt = start;
     std::size_t rem = pages;
     while (rem) {
-      auto res = find_leaf(virt, false);
-      if (!res)
-        return std::unexpected<error_code>(res.error());
+      auto res = find_leaf(virt, user);
+      if (!res) {
+        ec = res.error();
+        break;
+      }
 
-      std::size_t n = pages_chunk(virt, res->second, rem);
+      std::uint64_t *e = res->first;
+      int level = res->second;
+      std::size_t n = pages_chunk(virt, level, rem);
+
+      if (level > 1 && n < pages_level(level)) {
+        auto res2 = split_leaf(e, level);
+        if (!res2) {
+          ec = res2.error();
+          break;
+        }
+        batch.add(virt, level);
+        continue;
+      }
+
+      if (set_leaf_protect(e, level, prot))
+        batch.add(virt, level);
+
       virt += n * PAGE_SIZE;
       rem -= n;
     }
   }
 
-  tlb::flush_batch batch = {.start = 0, .pages = 0};
-  std::uintptr_t virt = start;
-  std::size_t rem = pages;
+  tlb_flush(batch);
 
-  std::optional<error_code> ec = std::nullopt;
-  while (rem) {
-    auto res = find_leaf(virt, user);
-    if (!res)
-      return std::unexpected<error_code>(res.error());
+  if (ec)
+    return std::unexpected<error_code>(*ec);
 
-    std::size_t n = pages_chunk(virt, res->second, rem);
-    if (res->second > 1 && n < pages_level(res->second)) {
-      auto res2 = split_leaf(res->first, res->second);
-      if (!res2) {
-        ec = res2.error();
+  return {};
+}
+
+std::expected<void, page_table::error_code>
+page_table::unmap(std::uintptr_t start, std::size_t pages) {
+  if (pages == 0)
+    return {};
+
+  if (auto r = check_range(start, pages); !r)
+    return r;
+
+  tlb::flush_batch batch;
+  std::optional<error_code> ec;
+
+  {
+    std::lock_guard<std::spinlock_mutex> lock(m_mtx);
+
+    std::uintptr_t virt = start;
+    std::size_t rem = pages;
+    while (rem) {
+      auto res = find_leaf(virt, false);
+      if (!res) {
+        ec = res.error();
         break;
       }
-      continue;
-    }
 
-    if (set_leaf_protect(res->first, res->second, prot)) {
-      if (n == 0)
-        batch.start = virt;
-      batch.pages++;
-    }
+      std::uint64_t *e = res->first;
+      int level = res->second;
+      std::size_t n = pages_chunk(virt, level, rem);
 
-    virt += n * PAGE_SIZE;
-    rem -= n;
+      if (level > 1 && n < pages_level(level)) {
+        auto res2 = split_leaf(e, level);
+        if (!res2) {
+          ec = res2.error();
+          break;
+        }
+        batch.add(virt, level);
+        continue;
+      }
+
+      std::atomic_ref<std::uint64_t>(*e).store(0, std::memory_order_release);
+      batch.add(virt, level);
+
+      virt += n * PAGE_SIZE;
+      rem -= n;
+    }
   }
 
-  tlb_flush(batch.start, batch.pages);
+  tlb_flush(batch);
 
-  if (!ec)
-    return std::expected<void, error_code>();
-
-  return std::unexpected<error_code>(*ec);
+  if (ec)
+    return std::unexpected<error_code>(*ec);
+  return {};
 }
 
 std::expected<std::uintptr_t, page_table::error_code>
