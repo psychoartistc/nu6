@@ -43,4 +43,9 @@ static inline constexpr bool pte_has_flag(std::uint64_t pte,
                                           std::uint64_t flag) {
   return pte & flag;
 }
+
+static inline constexpr bool prot_violates_wxorx(protection prot) {
+  return protection_has_flag(prot, protection::write) &&
+         protection_has_flag(prot, protection::execute);
+}
 } // namespace mm
