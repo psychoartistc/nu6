@@ -1,4 +1,5 @@
 #include <std/memory.hpp>
+#include <mm/mm_struct.hpp>
 #include <mm/virtual/vma_tree.hpp>
 #include <utils/math.hpp>
 #include <limine.h>
@@ -28,31 +29,31 @@ extern "C" void kmain() {
   if (!r)
     utils::panic("failed to initialize page allocator");
 
-  mm::page_table pt;
-  pt.clone_bootloader_pages();
-  pt.switch_to();
-
   auto res = mm::page_allocator::allocate(1);
   if (!res)
     pr_error("err: %d", static_cast<int>(res.error()));
   else
     pr_info("0x%p", *res);
 
-  mm::vma_tree<mm::pool_allocator<mm::vma>> tree{mm::KERNEL_VMA_START,
-                                                 mm::KERNEL_VMA_END};
+  auto &tree = mm::get_kernel_vma_tree();
+  auto &pt = mm::get_kernel_pt();
 
-  auto vma = tree.allocate(4096);
-  pr_info("allocated range 0x%p -> 0x%p", vma->address,
-          vma->address + vma->count * mm::PAGE_SIZE);
+  auto res2 = mm::allocate_virtual(
+      tree, pt, 16384,
+      mm::protection::kernel | mm::protection::write | mm::protection::read,
+      true);
+  if (!res2)
+    pr_info("allocate_virtual fail");
 
-  auto res3 = pt.map(*res, vma->address,
-                     mm::protection::kernel | mm::protection::read |
-                         mm::protection::write);
+  int *addr = reinterpret_cast<int *>(*res2);
+  *addr = 5;
+  pr_info("%d", *addr);
 
-  pr_info("writing int %d to virtual address at 0x%p", 5, vma->address);
-  int *a = reinterpret_cast<int *>(vma->address);
-  *a = 5;
-  pr_info("virtual address 0x%p has int value %d", vma->address, *a);
+  auto res3 = tree.find(reinterpret_cast<std::uintptr_t>(addr));
+  if (!res3)
+    pr_error("lookup fail");
 
+  pr_info("address 0x%p belongs to vma 0x%p -> 0x%p", addr, res3->address,
+          res3->address + res3->count * mm::PAGE_SIZE);
   arch::hcf();
 }

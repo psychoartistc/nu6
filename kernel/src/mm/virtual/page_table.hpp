@@ -29,7 +29,6 @@ public:
     return static_cast<std::size_t>(1) << (9 * (level - 1));
   }
 
-private:
   static inline constexpr std::uint64_t protection_to_pte(protection vm) {
     std::uint64_t flags = 0;
     if (protection_has_flag(vm, protection::write))
@@ -84,6 +83,7 @@ private:
                         : arch::mm::MASK_1G;
   }
 
+private:
   std::expected<std::uintptr_t, page_allocator::error_code> alloc_table();
 
   std::expected<void, error_code>

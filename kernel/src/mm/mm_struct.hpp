@@ -19,6 +19,8 @@ allocate_virtual(vma_tree<T> &tree, page_table &pt, std::size_t size,
   if (!res)
     return std::unexpected<page_table::error_code>(
         page_table::error_code::no_memory);
+  pr_info("allocated 0x%p -> 0x%p from tree", res->address,
+          res->address + res->count * PAGE_SIZE);
 
   if (no_demand_paging) {
     // map immediately

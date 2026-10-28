@@ -409,6 +409,7 @@ page_table::unmap(std::uintptr_t start, std::size_t pages) {
 
   if (ec)
     return std::unexpected<error_code>(*ec);
+
   return {};
 }
 
@@ -433,6 +434,39 @@ page_table::physical_of(std::uintptr_t addr) {
 
   uint64_t off_mask = (pages_level(level) * PAGE_SIZE) - 1;
   return (e & page_level_addr_mask(level)) | (addr & off_mask);
+}
+
+static void free_table_recursive(std::uint64_t *table, int level) {
+  for (std::size_t i = 0; i < 512; ++i) {
+    std::uint64_t e = table[i];
+
+    if (!pte_has_flag(e, arch::mm::P_X86_PRESENT))
+      continue;
+
+    if (level == 1 || (level < 4 && pte_has_flag(e, arch::mm::P_X86_HUGE)))
+      continue;
+
+    if (!pte_has_flag(e, arch::mm::P_X86_OWNED))
+      continue;
+
+    std::uintptr_t child_phys = e & arch::mm::MASK_4K;
+    auto *child = page_table::table_of(e);
+
+    free_table_recursive(child, level - 1);
+
+    page_allocator::free(child_phys, 1);
+  }
+}
+
+page_table::~page_table() {
+  if (m_pml4Phys == 0)
+    return;
+
+  auto *pml4 = reinterpret_cast<std::uint64_t *>(p2v(m_pml4Phys));
+
+  free_table_recursive(pml4, 4);
+
+  page_allocator::free(m_pml4Phys, 1);
 }
 
 } // namespace mm

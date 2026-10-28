@@ -74,7 +74,7 @@ public:
   std::uintptr_t address_space_end() const { return m_vasEnd; }
 
   // used in demand paging
-  vma *find(std::uintptr_t address) {
+  const vma *find(std::uintptr_t address) {
     std::lock_guard<std::spinlock_mutex> lock(m_mtx);
     auto it = m_rbtree.find(address);
     return it == m_rbtree.end() ? nullptr : &*it;
