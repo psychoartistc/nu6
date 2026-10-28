@@ -74,6 +74,7 @@ free_virtual(vma_tree<T> &tree, page_table &pt, void *ptr) {
       return std::unexpected<page_table::error_code>(res.error());
   }
 
+  area->mapped = false;
   bool a = tree.free({area->address, area->count});
   if (!a) {
     pr_warn("failed to free vma 0x%p -> 0x%p back to tree", area->address,

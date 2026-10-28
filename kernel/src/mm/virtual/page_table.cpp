@@ -61,7 +61,7 @@ page_table::clone_level(std::uint64_t *dst, const std::uint64_t *src,
     dst[i] = *res | (e & arch::mm::PT_FLAGS_MASK) | arch::mm::P_X86_OWNED;
   }
 
-  return std::expected<void, page_table::error_code>();
+  return {};
 }
 
 page_table::page_table() {
@@ -210,7 +210,7 @@ page_table::map_at_level(std::uintptr_t virt, std::uintptr_t phys,
 
   entry.store(v, std::memory_order_release);
 
-  return std::expected<void, error_code>();
+  return {};
 }
 
 static inline constexpr int page_type_to_level(page_table::page_type type) {
@@ -260,7 +260,7 @@ page_table::split_leaf(std::uint64_t *e, int level) {
                   arch::mm::P_X86_OWNED | (old & arch::mm::P_X86_USER),
               std::memory_order_release);
 
-  return std::expected<void, error_code>();
+  return {};
 }
 
 bool page_table::set_leaf_protect(std::uint64_t *e, int level,
