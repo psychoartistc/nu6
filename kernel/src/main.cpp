@@ -45,5 +45,14 @@ extern "C" void kmain() {
   pr_info("allocated range 0x%p -> 0x%p", vma->address,
           vma->address + vma->count * mm::PAGE_SIZE);
 
+  auto res3 = pt.map(*res, vma->address,
+                     mm::protection::kernel | mm::protection::read |
+                         mm::protection::write);
+
+  pr_info("writing int %d to virtual address at 0x%p", 5, vma->address);
+  int *a = reinterpret_cast<int *>(vma->address);
+  *a = 5;
+  pr_info("virtual address 0x%p has int value %d", vma->address, *a);
+
   arch::hcf();
 }

@@ -24,7 +24,7 @@ private:
   std::atomic<bool> m_bNotEmpty = false;
 
 public:
-  bool reclaim_type(std::uint64_t type);
+  bool reclaim_type(std::uint64_t type, bool update_total_frames = false);
 
   std::expected<std::uintptr_t, mm::page_allocator::error_code> pop();
 

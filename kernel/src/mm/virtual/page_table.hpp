@@ -21,6 +21,10 @@ public:
   };
   enum class page_type { normal, super, mega };
 
+  static inline constexpr std::size_t pages_level(int level) {
+    return static_cast<std::size_t>(1) << (9 * (level - 1));
+  }
+
 private:
   static inline constexpr std::uint64_t protection_to_pte(protection vm) {
     std::uint64_t flags = 0;
@@ -65,10 +69,36 @@ private:
     return reinterpret_cast<std::uint64_t *>(p2v(entry & arch::mm::MASK_4K));
   }
 
+  static inline constexpr bool page_is_canonical(std::uintptr_t v) {
+    std::int64_t s = (std::int64_t)v;
+    return ((s << 16) >> 16) == s;
+  }
+
+  static inline constexpr std::uint64_t page_level_addr_mask(int level) {
+    return level == 1   ? arch::mm::MASK_4K
+           : level == 2 ? arch::mm::MASK_2M
+                        : arch::mm::MASK_1G;
+  }
+
   std::expected<std::uintptr_t, page_allocator::error_code> alloc_table();
-  std::expected<std::uintptr_t *, error_code> walk(std::uintptr_t to);
+
   std::expected<void, error_code>
   clone_level(std::uint64_t *dst, const std::uint64_t *src, int level);
+
+  std::expected<void, error_code> map_at_level(std::uintptr_t phys,
+                                               std::uintptr_t virt,
+                                               protection prot, int level,
+                                               bool bypass_wxorx);
+
+  std::expected<std::uint64_t *, error_code> walk_create(std::uintptr_t virt,
+                                                         int level, bool user);
+
+  std::expected<std::pair<std::uint64_t *, int>, error_code>
+  find_leaf(std::uintptr_t virt, bool want_user);
+
+  std::expected<void, error_code> split_leaf(std::uint64_t *e, int level);
+
+  bool set_leaf_protect(std::uint64_t *e, int level, protection prot);
 
 private:
   logging::named_logger m_logger{"page_table"};
@@ -88,7 +118,6 @@ public:
 
   std::expected<void, error_code> protect(std::uintptr_t virt, protection prot,
                                           std::size_t pages = 1,
-                                          page_type type = page_type::normal,
                                           bool no_wxorx = false);
 
   std::expected<std::uintptr_t, error_code> physical_of(std::uintptr_t addr);

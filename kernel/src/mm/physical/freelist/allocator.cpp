@@ -6,7 +6,8 @@
 #include <utils/math.hpp>
 
 namespace mm {
-bool freelist_allocator::reclaim_type(std::uint64_t type) {
+bool freelist_allocator::reclaim_type(std::uint64_t type,
+                                      bool update_total_frames) {
   auto *resp = limine::memmap_request.response;
   if (!resp)
     return false;
@@ -22,6 +23,8 @@ bool freelist_allocator::reclaim_type(std::uint64_t type) {
       std::uintptr_t pageStart = entry->base + j * PAGE_SIZE;
 
       push(pageStart);
+      if (update_total_frames)
+        m_totalFrames.fetch_add(1);
     }
   }
 
@@ -77,7 +80,7 @@ bool freelist_allocator::push(std::uintptr_t page) {
 static freelist_allocator s_freelist{};
 
 bool page_allocator::initialize() {
-  return s_freelist.reclaim_type(LIMINE_MEMMAP_USABLE);
+  return s_freelist.reclaim_type(LIMINE_MEMMAP_USABLE, true);
 }
 
 std::expected<std::uintptr_t, page_allocator::error_code>
