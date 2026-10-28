@@ -53,7 +53,13 @@ extern "C" void kmain() {
   if (!res3)
     pr_error("lookup fail");
 
-  pr_info("address 0x%p belongs to vma 0x%p -> 0x%p", addr, res3->address,
-          res3->address + res3->count * mm::PAGE_SIZE);
+  pr_info("address 0x%p belongs to vma 0x%p -> 0x%p, mapped: %d", addr,
+          res3->address, res3->address + res3->count * mm::PAGE_SIZE,
+          res3->mapped);
+
+  auto res4 = mm::free_virtual(tree, pt, addr);
+  if (!res4)
+    pr_warn("fail");
+
   arch::hcf();
 }

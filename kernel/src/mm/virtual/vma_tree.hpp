@@ -13,10 +13,13 @@
 namespace mm {
 
 struct vma {
-  std::uintptr_t address;
+  std::uintptr_t address{0x0};
 
   // num of pages
-  std::uint64_t count;
+  std::uint64_t count{0};
+
+  // this is not really used by the tree but by virtual_allocate
+  bool mapped{false};
 };
 
 struct vma_less {
@@ -74,15 +77,15 @@ public:
   std::uintptr_t address_space_end() const { return m_vasEnd; }
 
   // used in demand paging
-  const vma *find(std::uintptr_t address) {
+  vma *find(std::uintptr_t address) {
     std::lock_guard<std::spinlock_mutex> lock(m_mtx);
     auto it = m_rbtree.find(address);
-    return it == m_rbtree.end() ? nullptr : &*it;
+    return it == m_rbtree.end() ? nullptr : const_cast<vma *>(&*it);
   }
 
-  std::optional<vma> allocate(std::size_t size) {
+  vma *allocate(std::size_t size) {
     if (size == 0 || size > ~std::size_t(0) - (PAGE_SIZE - 1))
-      return std::nullopt;
+      return nullptr;
 
     std::uint64_t pages = (size + PAGE_SIZE - 1) / PAGE_SIZE;
 
@@ -95,12 +98,12 @@ public:
 
       if (limit > cursor && (limit - cursor) / PAGE_SIZE >= pages) {
         vma v{cursor, pages};
-        m_rbtree.emplace_hint(it, v);
-        return v;
+        auto a = m_rbtree.emplace_hint(it, v);
+        return const_cast<vma *>(&(*a));
       }
 
       if (at_end)
-        return std::nullopt;
+        return nullptr;
 
       cursor = it->address + it->count * PAGE_SIZE;
     }
@@ -174,8 +177,10 @@ public:
     auto it = m_rbtree.find(v.address);
 
     if (it == m_rbtree.end() || it->address != v.address ||
-        it->count != v.count)
+        it->count != v.count) {
+
       return false;
+    }
 
     m_rbtree.erase(it);
     return true;

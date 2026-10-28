@@ -21,7 +21,8 @@ public:
     wxorx_violation,
     no_memory,
     bad_address,
-    unsupported
+    unsupported,
+    tree_error
   };
   enum class page_type { normal, super, mega };
 
