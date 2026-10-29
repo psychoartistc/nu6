@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 .SUFFIXES:
 
 .DELETE_ON_ERROR:
@@ -30,7 +32,7 @@ override HDD_PART_SECTORS := $(shell echo $$(( ($(HDD_SIZE) - 2) * $(HDD_CYLINDE
 override HDD_PART_END := $(shell echo $$(( $(HDD_PART_START) + $(HDD_PART_SECTORS) - 1 )))
 override HDD_PART_OFFSET := $(shell echo $$(( $(HDD_PART_START) * 512 )))
 
-HOST_CC := cc
+HOST_CC := gcc
 HOST_CFLAGS := -g -O2 -pipe
 HOST_CPPFLAGS :=
 HOST_LDFLAGS :=

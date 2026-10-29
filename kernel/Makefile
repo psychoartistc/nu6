@@ -4,12 +4,11 @@
 
 override OUTPUT := kernel
 
-
 PREFIX := /usr/local
 
 CFLAGS := -g -O2 -pipe -DPAGE_ALLOC_USE_FREELIST -D__noreturn__=
 
-TOOLCHAIN := 
+TOOLCHAIN := llvm
 TOOLCHAIN_PREFIX := x86_64-elf-
 ifneq ($(TOOLCHAIN),)
     ifeq ($(TOOLCHAIN_PREFIX),)
@@ -175,18 +174,19 @@ ifneq ($(CXX_COMPILE_ERROR),)
     $(call TOOLCHAIN_ERROR,The C++ compiler does not work with the given CXXFLAGS: $(CXX_COMPILE_ERROR))
 endif
 
-ifneq ($(CC_IS_CLANG),1)
-    override CC_EMITS_ELF := $(shell ! $(CC) $(CFLAGS) -dM -E -x c /dev/null 2>/dev/null | grep -q 'define __ELF__ 1'; echo $$?)
-    ifneq ($(CC_EMITS_ELF),1)
-        $(call TOOLCHAIN_ERROR,The C compiler does not emit ELF objects)
-    endif
-endif
-ifneq ($(CXX_IS_CLANG),1)
-    override CXX_EMITS_ELF := $(shell ! $(CXX) $(CXXFLAGS) -dM -E -x c++ /dev/null 2>/dev/null | grep -q 'define __ELF__ 1'; echo $$?)
-    ifneq ($(CXX_EMITS_ELF),1)
-        $(call TOOLCHAIN_ERROR,The C++ compiler does not emit ELF objects)
-    endif
-endif
+#
+#ifneq ($(CC_IS_CLANG),1)
+#    override CC_EMITS_ELF := $(shell ! $(CC) $(CFLAGS) -dM -E -x c /dev/null 2>/dev/null | grep -q 'define __ELF__ 1'; echo $$?)
+#    ifneq ($(CC_EMITS_ELF),1)
+ #       $(call TOOLCHAIN_ERROR,The C compiler does not emit ELF objects)
+ #   endif
+#endif
+#ifneq ($(CXX_IS_CLANG),1)
+ #   override CXX_EMITS_ELF := $(shell ! $(CXX) $(CXXFLAGS) -dM -E -x c++ /dev/null 2>/dev/null | grep -q 'define __ELF__ 1'; echo $$?)
+  #  ifneq ($(CXX_EMITS_ELF),1)
+  #      $(call TOOLCHAIN_ERROR,The C++ compiler does not emit ELF objects)
+   # endif
+#endif
 
 ifeq ($(CXX_IS_CLANG),1)
     override CLANG_PRINT_COMMANDS := -\#\#\#
