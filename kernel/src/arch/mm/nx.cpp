@@ -1,5 +1,3 @@
-#pragma once
-
 #include <arch/cpuid.hpp>
 #include <arch/mm/nx.hpp>
 

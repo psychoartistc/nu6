@@ -42,6 +42,7 @@ extern "C" void kmain() {
       tree, pt, 16384,
       mm::protection::kernel | mm::protection::write | mm::protection::read,
       true);
+
   if (!res2)
     pr_info("allocate_virtual fail");
 

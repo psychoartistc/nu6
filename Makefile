@@ -1,5 +1,3 @@
-SHELL := /bin/bash
-
 .SUFFIXES:
 
 .DELETE_ON_ERROR:
