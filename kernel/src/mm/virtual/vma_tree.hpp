@@ -8,7 +8,6 @@
 #include <utils/panic.hpp>
 #include <mm/common.hpp>
 #include <std/dsa/rbtree.hpp>
-#include <mm/physical/phys_allocator.hpp>
 
 namespace mm {
 
@@ -43,25 +42,15 @@ struct vma_less {
 // userland processes should use the normal allocator
 template <class Allocator = std::allocator<vma>> class vma_tree {
 private:
-  page_pool m_pagePool{};
   std::rb_tree<vma, std::rb_identity, vma_less, Allocator> m_rbtree{};
   std::uintptr_t m_vasStart{0x0};
   std::uintptr_t m_vasEnd{0x0};
   std::spinlock_mutex m_mtx{};
   logging::named_logger m_logger{"vma_tree"};
 
-private:
-  Allocator make_alloc() {
-    if constexpr (std::is_constructible_v<Allocator, page_pool &>)
-      return Allocator(m_pagePool);
-    else
-      return Allocator();
-  }
-
 public:
   vma_tree(std::uintptr_t vasStart, std::uintptr_t vasEnd)
-      : m_rbtree(make_alloc()),
-        m_vasStart((vasStart + PAGE_SIZE - 1) & ~std::uintptr_t(PAGE_SIZE - 1)),
+      : m_vasStart((vasStart + PAGE_SIZE - 1) & ~std::uintptr_t(PAGE_SIZE - 1)),
         m_vasEnd(vasEnd & ~std::uintptr_t(PAGE_SIZE - 1)) {
     std::size_t bytes = m_vasEnd - m_vasStart;
     std::array<char, utils::FMT_SIZE_BUFSIZE> buff{};

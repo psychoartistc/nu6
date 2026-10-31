@@ -15,7 +15,7 @@ private:
   static logging::named_logger s_logger;
   static std::atomic<std::uint64_t> s_coresOnline;
 
-  void ap_entry(limine_mp_info *m);
+  static void ap_entry(limine_mp_info *m);
 
 public:
   static void launch_all();
