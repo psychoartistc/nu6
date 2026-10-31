@@ -24,7 +24,6 @@
 extern "C" void kmain() {
   cxxabi::call_global_ctors();
   module::initialize_some(module::module_init_order::urgent);
-  arch::smp::core_manager::launch_all();
 
   bool r = mm::page_allocator::initialize();
   if (!r)
@@ -36,9 +35,8 @@ extern "C" void kmain() {
   else
     pr_info("0x%p", *res);
 
-  auto &pt = mm::get_kernel_pt();
   auto &tree = mm::get_kernel_vma_tree();
-  // auto &slub = mm::slub::slub_allocator<4096, mm::page_slub_backend>::get();
+  auto &pt = mm::get_kernel_pt();
 
   auto res2 = mm::allocate_virtual(
       tree, pt, 16384,
@@ -46,7 +44,7 @@ extern "C" void kmain() {
       true);
 
   if (!res2)
-    pr_error("allocate_virtual fail");
+    pr_info("allocate_virtual fail");
 
   int *addr = reinterpret_cast<int *>(*res2);
   *addr = 5;

@@ -6,15 +6,14 @@
 #include <cstdint>
 
 namespace mm {
-namespace slub {
+
+template <std::size_t slabSize, typename Alloc> class slub_allocator;
 
 template <typename A>
 concept slab_backend = requires(A a, void *p) {
   { a.allocate() } -> std::convertible_to<void *>;
   a.deallocate(p);
 };
-
-template <std::size_t slabSize, slab_backend Alloc> class slub_allocator;
 
 inline constexpr std::uint32_t SLUB_MAGIC_SLAB = 0x534c4142;  // 'SLAB'
 inline constexpr std::uint32_t SLUB_MAGIC_LARGE = 0x4c415247; // 'LARG'
@@ -33,6 +32,8 @@ struct slub_slab {
   std::uint32_t capacity;
   std::atomic<std::uint32_t> bump_index;
 };
+
+namespace slub {
 
 inline constexpr unsigned SLUB_PTR_BITS = 48;
 inline constexpr std::uint64_t SLUB_PTR_MASK =
@@ -67,6 +68,6 @@ inline void free_slot_set_next(void *node, void *next) {
 inline void *free_slot_get_next(void *node) {
   return *static_cast<void **>(node);
 }
+
 } // namespace slub
-//} // namespace slub
 } // namespace mm

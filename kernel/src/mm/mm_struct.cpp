@@ -1,5 +1,4 @@
 #include <mm/mm_struct.hpp>
-#include <mm/slub.hpp>
 
 namespace mm {
 kernel_vma_tree_t &get_kernel_vma_tree() {
