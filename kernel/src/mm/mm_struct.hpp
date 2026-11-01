@@ -39,7 +39,6 @@ allocate_virtual(vma_tree<T> &tree, page_table &pt, std::size_t size,
         return std::unexpected<page_table::error_code>(res3.error());
     }
     res->mapped = true;
-
   } else if (!bypass_wxorx && prot_violates_wxorx(prot))
     return std::unexpected<page_table::error_code>(
         page_table::error_code::wxorx_violation);

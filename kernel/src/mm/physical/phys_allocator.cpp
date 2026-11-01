@@ -11,7 +11,6 @@ void page_pool::partial_push(page_header *pg) noexcept {
   m_partial = pg;
   pg->in_partial = true;
 }
-
 void page_pool::partial_remove(page_header *pg) noexcept {
   if (pg->part_prev)
     pg->part_prev->part_next = pg->part_next;
@@ -32,7 +31,6 @@ page_pool::page_header *page_pool::new_page() {
 
   auto *pg = reinterpret_cast<page_header *>(mm::p2v(*res));
   assert((reinterpret_cast<std::uintptr_t>(pg) & (PAGE_SIZE - 1)) == 0);
-
   *pg = page_header{};
 
   pg->phys = *res;
@@ -89,12 +87,10 @@ void page_pool::bind(std::size_t size, std::size_t align) {
 void *page_pool::allocate(std::size_t size, std::size_t align) {
   bind(size, align);
   page_header *pg = m_partial ? m_partial : new_page();
-
   if (pg->used == 0 && pg->bump == 0 && !pg->free_list) {
   } else if (pg->used == 0) {
     --m_empty;
   }
-
   void *s;
   if (pg->free_list) {
     s = pg->free_list;
@@ -102,7 +98,6 @@ void *page_pool::allocate(std::size_t size, std::size_t align) {
   } else {
     s = slot_at(pg, pg->bump++);
   }
-
   ++pg->used;
   if (!pg->free_list && pg->bump == m_capacity)
     partial_remove(pg);
@@ -112,11 +107,9 @@ void *page_pool::allocate(std::size_t size, std::size_t align) {
 void page_pool::deallocate(void *p) noexcept {
   auto *pg = reinterpret_cast<page_header *>(
       reinterpret_cast<std::uintptr_t>(p) & ~std::uintptr_t(PAGE_SIZE - 1));
-
   *static_cast<void **>(p) = pg->free_list;
   pg->free_list = p;
   --pg->used;
-
   if (!pg->in_partial)
     partial_push(pg);
 

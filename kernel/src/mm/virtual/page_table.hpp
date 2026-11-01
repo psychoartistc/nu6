@@ -115,7 +115,6 @@ private:
 
 public:
   page_table();
-  page_table(std::uintptr_t pml4);
   ~page_table();
 
   std::expected<void, error_code> map(std::uintptr_t phys, std::uintptr_t virt,

@@ -73,8 +73,6 @@ page_table::page_table() {
   m_pml4Phys = *res;
 }
 
-page_table::page_table(std::uintptr_t pml4) : m_pml4Phys(pml4) {}
-
 void page_table::clone_bootloader_pages() {
   std::uint64_t *src = reinterpret_cast<std::uint64_t *>(
       p2v(arch::mm::read_cr3() & arch::mm::MASK_4K));
