@@ -1,11 +1,28 @@
 #pragma once
 
+#include <mm/slub.hpp>
 #include <mm/virtual/page_table.hpp>
 #include <mm/virtual/vma_tree.hpp>
 #include <mm/virtual/vma_defs.hpp>
 
 namespace mm {
-using kernel_vma_tree_t = vma_tree<pool_allocator<vma>>;
+// WARNING: this allocator is very terrible and shouldnt be used
+// in anything outside than the kernel vma tree
+class page_slub_backend {
+public:
+  void *allocate() {
+    auto res = page_allocator::allocate(1);
+    if (!res)
+      return nullptr;
+
+    return p2v(*res);
+  }
+
+  void deallocate(void *ptr) { page_allocator::free(v2p(ptr), 1); }
+};
+
+using kernel_vma_tree_t =
+    vma_tree<slub_stl_allocator<vma, PAGE_SIZE, page_slub_backend>>;
 
 kernel_vma_tree_t &get_kernel_vma_tree();
 page_table &get_kernel_pt();
