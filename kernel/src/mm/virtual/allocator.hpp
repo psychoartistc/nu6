@@ -6,12 +6,6 @@
 #include <mm/physical/slub_backend.hpp>
 
 namespace mm {
-using kernel_vma_tree_t =
-    vma_tree<slub_stl_allocator<vma, PAGE_SIZE, page_slub_backend, false>>;
-
-kernel_vma_tree_t &get_kernel_vma_tree();
-page_table &get_kernel_pt();
-
 template <typename T = std::allocator<vma>>
 std::expected<void *, page_table::error_code>
 allocate_virtual(vma_tree<T> &tree, page_table &pt, std::size_t size,

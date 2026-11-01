@@ -14,22 +14,22 @@ enum class protection {
   kernel = 1 << 4
 };
 
-inline protection operator|(protection lhs, protection rhs) {
+inline constexpr protection operator|(protection lhs, protection rhs) {
   using T = std::underlying_type_t<protection>;
   return static_cast<protection>(static_cast<T>(lhs) | static_cast<T>(rhs));
 }
 
-inline protection operator&(protection lhs, protection rhs) {
+inline constexpr protection operator&(protection lhs, protection rhs) {
   using T = std::underlying_type_t<protection>;
   return static_cast<protection>(static_cast<T>(lhs) & static_cast<T>(rhs));
 }
 
-inline protection operator~(protection val) {
+inline constexpr protection operator~(protection val) {
   using T = std::underlying_type_t<protection>;
   return static_cast<protection>(~static_cast<T>(val));
 }
 
-inline protection &operator|=(protection &lhs, protection rhs) {
+inline constexpr protection &operator|=(protection &lhs, protection rhs) {
   lhs = lhs | rhs;
   return lhs;
 }

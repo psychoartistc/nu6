@@ -20,6 +20,7 @@
 #include <std/dsa/rbtree.hpp>
 #include <mm/physical/freelist/freelist.hpp>
 #include <mm/virtual/page_table.hpp>
+#include <mm/stl.hpp>
 
 extern "C" void kmain() {
   cxxabi::call_global_ctors();
@@ -38,31 +39,8 @@ extern "C" void kmain() {
 
   auto &pt = mm::get_kernel_pt();
   auto &tree = mm::get_kernel_vma_tree();
-  // auto &slub = mm::slub::slub_allocator<4096, mm::page_slub_backend>::get();
-
-  auto res2 = mm::allocate_virtual(
-      tree, pt, 16384,
-      mm::protection::kernel | mm::protection::write | mm::protection::read,
-      true);
-
-  if (!res2)
-    pr_error("allocate_virtual fail");
-
-  int *addr = reinterpret_cast<int *>(*res2);
-  *addr = 5;
-  pr_info("%d", *addr);
-
-  auto res3 = tree.find(reinterpret_cast<std::uintptr_t>(addr));
-  if (!res3)
-    pr_error("lookup fail");
-
-  pr_info("address 0x%p belongs to vma 0x%p -> 0x%p, mapped: %d", addr,
-          res3->address, res3->address + res3->count * mm::PAGE_SIZE,
-          res3->mapped);
-
-  auto res4 = mm::free_virtual(tree, pt, addr);
-  if (!res4)
-    pr_warn("fail");
+  int *num = new int(4);
+  pr_info("%d", *num);
 
   arch::hcf();
 }
