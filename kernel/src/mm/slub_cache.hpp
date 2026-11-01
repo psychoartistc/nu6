@@ -15,8 +15,9 @@
 namespace mm {
 
 namespace slub {
-template <std::size_t slabSize, typename Alloc> class slub_cache_impl {
-  static_assert(slab_backend<Alloc>,
+template <std::size_t slabSize, typename Alloc, bool dynBackend>
+class slub_cache_impl {
+  static_assert(slab_backend<Alloc, dynBackend>,
                 "Alloc needs void* allocate() and void deallocate(void*)");
 
   static constexpr std::size_t HEADER_SIZE = sizeof(slub_header);
@@ -74,7 +75,20 @@ public:
   }
 
 private:
-  friend class slub_allocator<slabSize, Alloc>;
+  friend class slub_allocator<slabSize, Alloc, dynBackend>;
+
+  void *backend_alloc() {
+    if constexpr (dynBackend)
+      return m_alloc.allocate(slabSize);
+    else
+      return m_alloc.allocate();
+  }
+  void backend_free(void *p) {
+    if constexpr (dynBackend)
+      m_alloc.deallocate(p, slabSize);
+    else
+      m_alloc.deallocate(p);
+  }
 
   bool enter() {
     m_activeOps.fetch_add(1, std::memory_order_seq_cst);
@@ -158,7 +172,7 @@ private:
     if (auto *spare = spare_slab_pop())
       return spare;
 
-    void *memory = m_alloc.allocate();
+    void *memory = backend_alloc();
     if (!memory)
       return nullptr;
 
@@ -176,7 +190,8 @@ private:
     auto *slab = m_allSlabs.exchange(nullptr, std::memory_order_acq_rel);
     while (slab) {
       auto *next = slab->all_next;
-      m_alloc.deallocate(slab);
+      // m_alloc.deallocate(slab);
+      backend_free(slab);
       slab = next;
     }
   }
@@ -269,7 +284,8 @@ private:
   std::array<std::atomic<slub_slab *>, arch::smp::MAX_CORES> m_cpuSlabs{};
 };
 
-template <typename T, std::size_t slabSize, typename Alloc> class slub_cache {
+template <typename T, std::size_t slabSize, typename Alloc, bool dynBackend>
+class slub_cache {
   // friend class slub_allocator;
 
 public:
@@ -288,7 +304,7 @@ public:
   void free(T *ptr) { m_cache.free(ptr); }
 
 private:
-  slub_cache_impl<slabSize, Alloc> m_cache;
+  slub_cache_impl<slabSize, Alloc, dynBackend> m_cache;
 };
 
 } // namespace slub

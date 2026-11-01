@@ -10,9 +10,10 @@
 namespace mm {
 
 namespace slub {
-template <std::size_t slabSize, slab_backend Alloc> class slub_allocator {
-
-  using cache_type = slub_cache_impl<slabSize, Alloc>;
+template <std::size_t slabSize, typename Alloc, bool dynamicBackend>
+  requires slab_backend<Alloc, dynamicBackend>
+class slub_allocator {
+  using cache_type = slub_cache_impl<slabSize, Alloc, dynamicBackend>;
   static constexpr std::size_t HEADER_SIZE = sizeof(slub_header);
 
 public:
@@ -36,25 +37,28 @@ public:
 
   slub_allocator(const slub_allocator &) = delete;
   slub_allocator &operator=(const slub_allocator &) = delete;
-
   void *allocate(std::size_t size) {
     if (!size)
       return nullptr;
 
     int index = size_to_class(size);
-    if (index >= 0) {
+    if (index >= 0)
       return m_caches[index].allocate_raw(static_cast<std::uint32_t>(index),
                                           size);
-    }
 
     if (size > std::numeric_limits<std::size_t>::max() - HEADER_SIZE)
       return nullptr;
+    const auto total = size + HEADER_SIZE;
 
-    auto total = size + HEADER_SIZE;
-    if (total > slabSize)
-      return nullptr;
+    void *memory;
+    if constexpr (dynamicBackend) {
+      memory = m_large.allocate(total);
+    } else {
+      if (total > slabSize)
+        return nullptr;
 
-    void *memory = m_large.allocate();
+      memory = m_large.allocate();
+    }
     if (!memory)
       return nullptr;
 
@@ -68,12 +72,15 @@ public:
   void free(void *ptr) {
     if (!ptr)
       return;
-
     auto *header = to_header(ptr);
 
     if (header->magic == SLUB_MAGIC_LARGE) {
+      const auto total = header->alloc_size;
       header->magic = 0;
-      m_large.deallocate(header);
+      if constexpr (dynamicBackend)
+        m_large.deallocate(header, total);
+      else
+        m_large.deallocate(header);
       return;
     }
 
@@ -82,7 +89,6 @@ public:
 
     m_caches[header->class_idx].free_raw(header);
   }
-
   void *reallocate(void *ptr, std::size_t size) {
     if (!ptr)
       return allocate(size);
@@ -92,10 +98,9 @@ public:
     }
 
     auto *header = to_header(ptr);
-
     std::size_t old_size;
     if (header->magic == SLUB_MAGIC_LARGE)
-      old_size = slabSize - HEADER_SIZE;
+      old_size = header->alloc_size - HEADER_SIZE;
     else if (header->magic == SLUB_MAGIC_SLAB &&
              header->class_idx < NUM_CLASSES)
       old_size = CLASS_SIZES[header->class_idx];
@@ -144,10 +149,10 @@ private:
 
 } // namespace slub
 
-template <typename T, std::size_t slabSize, typename backend>
-  requires slub::slab_backend<backend>
+template <typename T, std::size_t slabSize, typename backend, bool dynamic>
+  requires slub::slab_backend<backend, dynamic>
 class slub_stl_allocator {
-  using base_allocator = slub::slub_allocator<slabSize, backend>;
+  using base_allocator = slub::slub_allocator<slabSize, backend, dynamic>;
 
   static_assert(alignof(T) <= 16, "over aligned types are not supported");
 
@@ -157,14 +162,14 @@ public:
   using is_always_equal = std::true_type;
 
   template <typename U> struct rebind {
-    using other = slub_stl_allocator<U, slabSize, backend>;
+    using other = slub_stl_allocator<U, slabSize, backend, dynamic>;
   };
 
   slub_stl_allocator() noexcept = default;
 
   template <typename U>
   slub_stl_allocator(
-      const slub_stl_allocator<U, slabSize, backend> &) noexcept {}
+      const slub_stl_allocator<U, slabSize, backend, dynamic> &) noexcept {}
 
   [[nodiscard]] T *allocate(std::size_t n) {
     if (n == 0 || n > std::numeric_limits<std::size_t>::max() / sizeof(T))
@@ -175,10 +180,11 @@ public:
   void deallocate(T *p, std::size_t) noexcept { base_allocator::get().free(p); }
 };
 
-template <typename T, typename U, std::size_t slabSize, typename backend>
+template <typename T, typename U, std::size_t slabSize, typename backend,
+          bool dynamic>
 constexpr bool
-operator==(const slub_stl_allocator<T, slabSize, backend> &,
-           const slub_stl_allocator<U, slabSize, backend> &) noexcept {
+operator==(const slub_stl_allocator<T, slabSize, backend, dynamic> &,
+           const slub_stl_allocator<U, slabSize, backend, dynamic> &) noexcept {
   return true;
 }
 } // namespace mm

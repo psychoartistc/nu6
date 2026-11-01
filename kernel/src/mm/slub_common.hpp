@@ -7,14 +7,25 @@
 
 namespace mm {
 namespace slub {
-
 template <typename A>
-concept slab_backend = requires(A a, void *p) {
+concept fixed_slab_backend = requires(A a, void *p) {
   { a.allocate() } -> std::convertible_to<void *>;
   a.deallocate(p);
 };
 
-template <std::size_t slabSize, slab_backend Alloc> class slub_allocator;
+template <typename A>
+concept dynamic_slab_backend = requires(A a, void *p, std::size_t n) {
+  { a.allocate(n) } -> std::convertible_to<void *>;
+  a.deallocate(p, n);
+};
+
+template <typename A, bool dynamic>
+concept slab_backend =
+    (dynamic && dynamic_slab_backend<A>) || (!dynamic && fixed_slab_backend<A>);
+
+template <std::size_t slabSize, typename Alloc, bool dynamicBackend>
+  requires slab_backend<Alloc, dynamicBackend>
+class slub_allocator;
 
 inline constexpr std::uint32_t SLUB_MAGIC_SLAB = 0x534c4142;  // 'SLAB'
 inline constexpr std::uint32_t SLUB_MAGIC_LARGE = 0x4c415247; // 'LARG'

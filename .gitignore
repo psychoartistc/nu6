@@ -15,3 +15,4 @@ kernel/cc-runtime
 kernel/limine-protocol
 kernel/bin-*
 kernel/obj-*
+build/
