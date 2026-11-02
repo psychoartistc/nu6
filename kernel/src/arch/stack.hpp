@@ -30,3 +30,7 @@ public:
   static std::expected<stack, error_code> new_user();
 };
 } // namespace arch
+
+extern "C" {
+void stack_enter(std::uintptr_t top, void (*entry)(void *), void *arg);
+}

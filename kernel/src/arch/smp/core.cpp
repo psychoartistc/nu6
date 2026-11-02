@@ -14,6 +14,7 @@ core &core::current() {
 }
 
 void core::on_launch(bool bsp) {
+  // wait until allocators are initialized
   utils::init_phase::wait_for(utils::e_init_states::allocator_ready);
   // all these stacks should never be
   // deleted when our kernel is ran

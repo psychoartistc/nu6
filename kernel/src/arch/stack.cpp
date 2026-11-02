@@ -3,7 +3,16 @@
 #include <mm/stl.hpp>
 
 namespace arch {
-void stack::enter(std::function<void()> fn) {}
+void stack::enter(std::function<void()> fn) {
+  stack_enter(
+      top(),
+      [](void *arg) {
+        auto *func = static_cast<std::function<void()> *>(arg);
+        if (func && *func)
+          (*func)();
+      },
+      &fn);
+}
 
 stack::stack(std::uintptr_t t) : m_top(t) {}
 
