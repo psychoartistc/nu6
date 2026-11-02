@@ -9,4 +9,6 @@ void core::set_current() {
 core &core::current() {
   return *reinterpret_cast<core *>(io::rdmsr(MSR_GS_BASE));
 }
+
+void core::on_launch(limine_mp_info *info) { (void)info; }
 } // namespace arch::smp

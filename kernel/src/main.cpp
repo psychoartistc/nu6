@@ -18,7 +18,6 @@
 #include <mm/virtual/vma_defs.hpp>
 #include <arch/tables/ist.hpp>
 #include <std/dsa/rbtree.hpp>
-#include <mm/physical/freelist/freelist.hpp>
 #include <mm/virtual/page_table.hpp>
 #include <mm/stl.hpp>
 

@@ -11,11 +11,12 @@ logging::named_logger core_manager::s_logger{"core_manager"};
 void core_manager::ap_entry(limine_mp_info *info) {
   std::uint64_t idx = info->extra_argument;
   s_cores[idx].set_current();
-
   s_coresOnline.fetch_add(1, std::memory_order_release);
 
-  std::unreachable();
+  s_cores[idx].on_launch(info);
+
   arch::hcf();
+  std::unreachable();
 }
 
 void core_manager::launch_all() {
