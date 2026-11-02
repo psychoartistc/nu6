@@ -30,3 +30,9 @@ void irq_dispatcher::dispatch(interrupt_frame *frame) {
     handler(frame);
 }
 } // namespace arch::irq
+
+extern "C" {
+void irq_dispatch(arch::interrupt_frame *frame) {
+  arch::irq::irq_dispatcher::dispatch(frame);
+}
+}

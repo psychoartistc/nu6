@@ -2,7 +2,7 @@
 
 #include <mm/slub.hpp>
 #include <mm/virtual/allocator.hpp>
-#include <mm/mm_struct.hpp>
+#include <mm/kernel_mm.hpp>
 
 namespace mm {
 static inline constexpr protection SLUB_SLAB_PROT =
@@ -42,8 +42,9 @@ public:
   }
 };
 
+template <typename T>
 using kernel_slub_allocator_t =
-    slub_stl_allocator<vma, PAGE_SIZE, kern_vmem_slub_backend, true>;
+    slub_stl_allocator<T, PAGE_SIZE, kern_vmem_slub_backend, true>;
 
 using slub_alloc_t =
     slub::slub_allocator<SLUB_SLAB_SIZE, kern_vmem_slub_backend, true>;

@@ -1,4 +1,4 @@
-#include <mm/mm_struct.hpp>
+#include <mm/kernel_mm.hpp>
 #include <mm/slub.hpp>
 
 namespace mm {

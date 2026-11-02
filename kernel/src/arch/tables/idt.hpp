@@ -52,6 +52,7 @@ public:
   static void clear_gate(std::uint8_t vector);
 
   static void initialize_and_load();
+  static void initialize();
 
   static void reload();
 };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <cstdint>
 #include <expected>
 #include <cstddef>
@@ -16,6 +17,8 @@ public:
 
 public:
   stack(std::uintptr_t top);
+
+  void enter(std::function<void()> fn);
 
   std::uintptr_t top() const { return m_top; }
 

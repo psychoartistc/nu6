@@ -34,7 +34,7 @@ public:
 
   void set_current();
 
-  void on_launch(limine_mp_info *info);
+  void on_launch(bool bsp = false);
 
   static core &current();
 };

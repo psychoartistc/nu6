@@ -3,6 +3,8 @@
 #include <mm/stl.hpp>
 
 namespace arch {
+void stack::enter(std::function<void()> fn) {}
+
 stack::stack(std::uintptr_t t) : m_top(t) {}
 
 stack stack::new_kernel() {

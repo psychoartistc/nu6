@@ -4,6 +4,7 @@
 #include <array>
 #include <limits>
 #include <mm/slub_cache.hpp>
+#include <utils/init_phase.hpp>
 #include <string_view>
 #include <utility>
 
@@ -48,7 +49,8 @@ public:
 
     if (size > std::numeric_limits<std::size_t>::max() - HEADER_SIZE)
       return nullptr;
-    const auto total = size + HEADER_SIZE;
+
+    auto total = size + HEADER_SIZE;
 
     void *memory;
     if constexpr (dynamicBackend) {
@@ -89,6 +91,7 @@ public:
 
     m_caches[header->class_idx].free_raw(header);
   }
+
   void *reallocate(void *ptr, std::size_t size) {
     if (!ptr)
       return allocate(size);
@@ -120,7 +123,9 @@ public:
   }
 
 private:
-  slub_allocator() : slub_allocator(std::make_index_sequence<NUM_CLASSES>{}) {}
+  slub_allocator() : slub_allocator(std::make_index_sequence<NUM_CLASSES>{}) {
+    utils::init_phase::checkpoint(utils::e_init_states::allocator_ready);
+  }
 
   template <std::size_t... I>
   explicit slub_allocator(std::index_sequence<I...>)

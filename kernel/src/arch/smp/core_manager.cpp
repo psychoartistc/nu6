@@ -13,7 +13,7 @@ void core_manager::ap_entry(limine_mp_info *info) {
   s_cores[idx].set_current();
   s_coresOnline.fetch_add(1, std::memory_order_release);
 
-  s_cores[idx].on_launch(info);
+  s_cores[idx].on_launch();
 
   arch::hcf();
   std::unreachable();

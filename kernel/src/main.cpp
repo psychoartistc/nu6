@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdnoreturn.h>
 #include <std/spinlock.hpp>
+#include <mm/virtual/slub_backend.hpp>
 #include <abi/itanium.hpp>
 #include <arch/tables/tss.hpp>
 #include <arch/tables/idt.hpp>
@@ -30,16 +31,10 @@ extern "C" void kmain() {
   if (!r)
     utils::panic("failed to initialize page allocator");
 
-  auto res = mm::page_allocator::allocate(1);
-  if (!res)
-    pr_error("err: %d", static_cast<int>(res.error()));
-  else
-    pr_info("0x%p", *res);
+  mm::slub_alloc_t &alloc = mm::slub_alloc_t::get();
+  utils::init_phase::checkpoint(utils::e_init_states::allocator_ready);
 
-  auto &pt = mm::get_kernel_pt();
-  auto &tree = mm::get_kernel_vma_tree();
-  int *num = new int(4);
-  pr_info("%d", *num);
+  arch::smp::core::current().on_launch(true);
 
   arch::hcf();
 }

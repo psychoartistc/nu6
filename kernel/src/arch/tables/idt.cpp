@@ -31,13 +31,20 @@ bool idt::set_gate(std::uint8_t vector, handler_t handler,
 
 void idt::clear_gate(std::uint8_t vector) { s_idt[vector] = {}; }
 
+void idt::initialize() {
+  s_idt.fill({});
+
+  s_idtPtr.limit = sizeof(s_idt) - 1;
+  s_idtPtr.base = reinterpret_cast<std::uint64_t>(s_idt.data());
+}
+
 void idt::initialize_and_load() {
   s_idt.fill({});
 
   s_idtPtr.limit = sizeof(s_idt) - 1;
   s_idtPtr.base = reinterpret_cast<std::uint64_t>(s_idt.data());
 
-  asm volatile("lidt %0" : : "m"(s_idtPtr) : "memory");
+  reload();
 
   s_logger.info("initialized");
 }
