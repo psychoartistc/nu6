@@ -4,6 +4,7 @@
 
 namespace arch {
 namespace irq {
+static inline constexpr std::size_t MAX_IRQS = 256;
 static inline constexpr std::uint64_t read_rflags() {
   std::uint64_t rflags;
   asm volatile("pushfq\n\t"
