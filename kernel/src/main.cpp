@@ -1,5 +1,5 @@
 #include <std/memory.hpp>
-#include <mm/mm_struct.hpp>
+#include <mm/kernel_mm.hpp>
 #include <mm/virtual/vma_tree.hpp>
 #include <utils/math.hpp>
 #include <limine.h>

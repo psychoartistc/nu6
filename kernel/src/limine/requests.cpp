@@ -20,6 +20,12 @@ __LIMINE_REQUEST volatile struct limine_memmap_request memmap_request = {
     .response = nullptr,
 };
 
+__LIMINE_REQUEST volatile struct limine_entropy_request entropy_request = {
+    .id = LIMINE_ENTROPY_REQUEST_ID,
+    .revision = 0,
+    .response = nullptr,
+    .value_count = 64};
+
 __LIMINE_REQUEST volatile struct limine_executable_file_request
     kernel_file_request = {.id = LIMINE_EXECUTABLE_FILE_REQUEST_ID,
                            .revision = 0,

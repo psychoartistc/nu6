@@ -16,6 +16,7 @@ extern volatile struct limine_mp_request mp_request;
 extern volatile struct limine_stack_size_request stacksize_request;
 extern volatile struct limine_dtb_request dtb_request;
 extern volatile struct limine_module_request module_request;
+extern volatile struct limine_entropy_request entropy_request;
 extern volatile uint64_t limin_requests_end_marker[];
 
 static inline bool framebuffer_available() {
