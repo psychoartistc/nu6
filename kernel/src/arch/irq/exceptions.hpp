@@ -51,12 +51,11 @@ class exceptions {
   static inline constexpr std::uint64_t CPU_EXCEPT_DEBUG = 1;
   static inline constexpr std::uint64_t CPU_EXCEPT_MACHINE_CHECK = 18;
 
-  static inline constexpr std::uint64_t IST_EXCEPTIONS_NUM = 5;
+  static inline constexpr std::uint64_t IST_EXCEPTIONS_NUM = 4;
 
   static inline constexpr std::array<std::uint64_t, IST_EXCEPTIONS_NUM>
-      IST_EXCEPTIONS_INT_NO = {CPU_EXCEPT_PAGE_FAULT, CPU_EXCEPT_DOUBLE_FAULT,
-                               CPU_EXCEPT_NMI, CPU_EXCEPT_DEBUG,
-                               CPU_EXCEPT_MACHINE_CHECK};
+      IST_EXCEPTIONS_INT_NO = {CPU_EXCEPT_DOUBLE_FAULT, CPU_EXCEPT_NMI,
+                               CPU_EXCEPT_DEBUG, CPU_EXCEPT_MACHINE_CHECK};
 
 public:
   static void install();
