@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mm/virtual/protection.hpp>
 #include <utils/fmt.hpp>
 #include <logging/logging.hpp>
 #include <std/lock_guard.hpp>
@@ -16,6 +17,8 @@ struct vma {
 
   // num of pages
   std::uint64_t count{0};
+
+  protection protect;
 
   // this is not really used by the tree but by virtual_allocate
   bool mapped{false};

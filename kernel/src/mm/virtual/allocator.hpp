@@ -6,42 +6,33 @@
 #include <mm/physical/slub_backend.hpp>
 
 namespace mm {
+std::expected<void, page_table::error_code>
+map_vma(page_table &pt, vma &vma, protection prot, bool bypass_wxorx = false);
+
 template <typename T = std::allocator<vma>>
 std::expected<void *, page_table::error_code>
 allocate_virtual(vma_tree<T> &tree, page_table &pt, std::size_t size,
                  protection prot, bool no_demand_paging = false,
                  bool bypass_wxorx = false) {
+  if (!bypass_wxorx && prot_violates_wxorx(prot))
+    return std::unexpected<page_table::error_code>(
+        page_table::error_code::wxorx_violation);
+
   auto res = tree.allocate(size);
   if (!res)
     return std::unexpected<page_table::error_code>(
         page_table::error_code::tree_error);
 
-  pr_info("allocated 0x%p -> 0x%p from tree", res->address,
-          res->address + res->count * PAGE_SIZE);
-
   if (no_demand_paging) {
     // map immediately
-    // TODO: greedy distribution algorithm here to map
-    // as many 1gb pages and 2mb pages possible
-    for (std::size_t i = 0; i < res->count; i++) {
-      auto res2 = page_allocator::allocate(1);
-      if (!res2)
-        return std::unexpected<page_table::error_code>(
-            page_table::error_code::no_memory);
-
-      auto res3 = pt.map(*res2, res->address + i * PAGE_SIZE, prot,
-                         page_table::page_type::normal, bypass_wxorx);
-      if (!res3)
-        return std::unexpected<page_table::error_code>(res3.error());
-    }
-    res->mapped = true;
-  } else if (!bypass_wxorx && prot_violates_wxorx(prot))
-    return std::unexpected<page_table::error_code>(
-        page_table::error_code::wxorx_violation);
+    auto res2 = map_vma(pt, *res, prot, bypass_wxorx);
+    if (!res2)
+      return std::unexpected<page_table::error_code>(res2.error());
+  }
 
   // in demand paging, mapping and physical allocation
   // is done when a page fault occurs, so we ignore mapping here obviously
-
+  // and return an unmapped address
   return reinterpret_cast<void *>(res->address);
 }
 
