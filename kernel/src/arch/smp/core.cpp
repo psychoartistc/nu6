@@ -1,9 +1,11 @@
 #include <arch/smp/core.hpp>
 #include <utils/init_phase.hpp>
 #include <arch/stack.hpp>
+#include <mm/stl.hpp>
 #include <arch/irq/irq_dispatcher.hpp>
 #include <arch/io/msr.hpp>
 #include <arch/irq/exceptions.hpp>
+#include <std/vendor/veque.hpp>
 
 namespace arch::smp {
 void core::set_current() {
@@ -37,7 +39,6 @@ void core::on_launch(bool bsp) {
 
   m_tss.load(arch::gdt::TSS_SELECTOR);
 
-  pr_info("after tss");
   if (bsp) {
     idt::initialize();
     irq::irq_dispatcher::install_handlers();
@@ -48,8 +49,7 @@ void core::on_launch(bool bsp) {
   m_stack.enter([]() {
     idt::reload();
     irq_enable();
-    pr_info("hello!");
-    asm volatile("ud2");
+
     arch::hcf();
   });
 }
