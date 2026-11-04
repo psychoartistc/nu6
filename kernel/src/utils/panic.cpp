@@ -78,7 +78,7 @@ static inline void register_dump() {
 
 [[noreturn]] void panic(std::string_view fmt, ...) {
   std::va_list va;
-  va_start(va, fmt.data());
+  va_start(va, fmt);
 
   vpanic(fmt, va);
 

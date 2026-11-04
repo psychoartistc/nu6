@@ -3,6 +3,7 @@
 #include <arch/stack.hpp>
 #include <arch/irq/irq_dispatcher.hpp>
 #include <arch/io/msr.hpp>
+#include <arch/irq/exceptions.hpp>
 
 namespace arch::smp {
 void core::set_current() {
@@ -24,19 +25,32 @@ void core::on_launch(bool bsp) {
   m_tss.set_ring0_stack(m_stack.top());
 
   for (std::size_t i = 0; i < ist::STACK_COUNT; ++i) {
-    stack istStack = stack::new_kernel();
+    class stack istStack = stack::new_kernel();
     m_ist.set(i, istStack.top());
   }
 
   m_ist.install(m_tss);
-  m_gdt.initialize_and_load(reinterpret_cast<std::uint64_t>(&m_tss.raw()),
-                            sizeof(arch::tss::entry) - 1);
+  m_gdt.initialize(reinterpret_cast<std::uint64_t>(&m_tss.raw()),
+                   sizeof(arch::tss::entry) - 1);
+
+  m_gdt.reload();
 
   m_tss.load(arch::gdt::TSS_SELECTOR);
 
+  pr_info("after tss");
   if (bsp) {
-    idt::initialize_and_load();
+    idt::initialize();
     irq::irq_dispatcher::install_handlers();
+    irq::exceptions::install();
+    idt::reload();
   }
+
+  m_stack.enter([]() {
+    idt::reload();
+    irq_enable();
+    pr_info("hello!");
+    asm volatile("ud2");
+    arch::hcf();
+  });
 }
 } // namespace arch::smp

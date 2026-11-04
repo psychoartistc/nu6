@@ -31,7 +31,7 @@ void gdt::set_tss_gate(std::size_t num, std::uint64_t base,
   upper[7] = 0;
 }
 
-void gdt::initialize_and_load(std::uint64_t tss_base, std::uint32_t tss_limit) {
+void gdt::initialize(std::uint64_t tss_base, std::uint32_t tss_limit) {
   m_gdtPtr.limit = sizeof(m_gdt) - 1;
   m_gdtPtr.base = reinterpret_cast<std::uint64_t>(m_gdt.data());
 
@@ -46,6 +46,10 @@ void gdt::initialize_and_load(std::uint64_t tss_base, std::uint32_t tss_limit) {
   set_gate(5, 0, 0, 0xF2, 0x00);
   set_gate(6, 0, 0, 0xFA, 0x20);
 
+  m_logger.info("initialized");
+}
+
+void gdt::reload() {
   asm volatile("lgdt %0\n\t"
 
                "mov $0x10, %%ax\n\t"
@@ -62,10 +66,6 @@ void gdt::initialize_and_load(std::uint64_t tss_base, std::uint32_t tss_limit) {
                :
                : "m"(m_gdtPtr)
                : "rax", "memory");
-
-  m_logger.info("initialized");
 }
-
-void gdt::reload() { asm volatile("lgdt %0" : : "m"(m_gdtPtr) : "memory"); }
 
 } // namespace arch

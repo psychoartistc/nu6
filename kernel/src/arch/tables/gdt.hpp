@@ -46,7 +46,7 @@ public:
 
   void set_tss_gate(std::size_t num, std::uint64_t base, std::uint32_t limit);
 
-  void initialize_and_load(std::uint64_t tss_base, std::uint32_t tss_limit);
+  void initialize(std::uint64_t tss_base, std::uint32_t tss_limit);
 
   void reload();
 };

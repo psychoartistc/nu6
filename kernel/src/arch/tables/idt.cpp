@@ -9,7 +9,7 @@ bool idt::set_gate(std::uint8_t vector, handler_t handler,
     return false;
   }
 
-  const auto address = reinterpret_cast<std::uint64_t>(handler);
+  auto address = reinterpret_cast<std::uint64_t>(handler);
 
   auto &gate = s_idt[vector];
 
@@ -36,23 +36,22 @@ void idt::initialize() {
 
   s_idtPtr.limit = sizeof(s_idt) - 1;
   s_idtPtr.base = reinterpret_cast<std::uint64_t>(s_idt.data());
-}
-
-void idt::initialize_and_load() {
-  s_idt.fill({});
-
-  s_idtPtr.limit = sizeof(s_idt) - 1;
-  s_idtPtr.base = reinterpret_cast<std::uint64_t>(s_idt.data());
-
-  reload();
 
   s_logger.info("initialized");
 }
 
-void idt::reload() { asm volatile("lidt %0" : : "m"(s_idtPtr) : "memory"); }
+void idt::initialize_and_load() {
+  initialize();
+  reload();
+}
 
-std::array<idt::entry, idt::ENTRY_COUNT> idt::s_idt{};
-idt::ptr idt::s_idtPtr{};
+void idt::reload() {
+  asm volatile("lidt %0" : : "m"(s_idtPtr) : "memory");
+  s_logger.info("reloaded");
+}
+
+std::array<idt::entry, idt::ENTRY_COUNT> idt::s_idt{0};
+idt::ptr idt::s_idtPtr{0x0};
 logging::named_logger idt::s_logger{"idt"};
 
 } // namespace arch

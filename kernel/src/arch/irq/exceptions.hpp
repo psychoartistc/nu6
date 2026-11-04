@@ -9,6 +9,7 @@ namespace arch {
 namespace irq {
 
 class exceptions {
+public:
   static inline constexpr std::uint64_t EXCEPTION_NUM = 32;
 
   static inline constexpr std::array<std::string_view, EXCEPTION_NUM>

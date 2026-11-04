@@ -3,7 +3,8 @@
 #include <mm/stl.hpp>
 
 namespace arch {
-void stack::enter(std::function<void()> fn) {
+void stack::enter(std::function<void()> fn) const {
+  pr_info("entering 0x%p", top());
   stack_enter(
       top(),
       [](void *arg) {
@@ -21,16 +22,7 @@ stack stack::new_kernel() {
   assert(cPtr && "failure to allocate a kernel stack is fatal");
 
   std::uintptr_t ptr = reinterpret_cast<std::uintptr_t>(cPtr);
-  return stack(ptr);
+  return stack(ptr + KERNEL_STACK_PAGES * mm::PAGE_SIZE);
 }
 
-// allocate a new user task
-std::expected<stack, stack::error_code> stack::new_user() {
-  char *cPtr = new char[USER_STACK_PAGES * mm::PAGE_SIZE];
-  if (!cPtr)
-    return std::unexpected<error_code>(error_code::no_memory);
-
-  std::uintptr_t ptr = reinterpret_cast<std::uintptr_t>(cPtr);
-  return stack(ptr);
-}
 } // namespace arch

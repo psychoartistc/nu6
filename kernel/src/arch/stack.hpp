@@ -18,19 +18,16 @@ public:
 public:
   stack(std::uintptr_t top);
 
-  void enter(std::function<void()> fn);
+  void enter(std::function<void()> fn) const;
 
   std::uintptr_t top() const { return m_top; }
 
   // allocate a new kernel stack
   // will panic if the allocation fails !
   static stack new_kernel();
-
-  // allocate a new user task
-  static std::expected<stack, error_code> new_user();
 };
 } // namespace arch
 
 extern "C" {
-void stack_enter(std::uintptr_t top, void (*entry)(void *), void *arg);
+extern void stack_enter(std::uintptr_t top, void (*entry)(void *), void *arg);
 }

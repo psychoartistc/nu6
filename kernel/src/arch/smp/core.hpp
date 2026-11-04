@@ -31,6 +31,7 @@ public:
 
   std::uint64_t lapic_id() const { return m_lapicId; }
   std::uint64_t index() const { return m_index; }
+  const stack &stack() const { return m_stack; }
 
   void set_current();
 
