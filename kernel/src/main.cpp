@@ -16,15 +16,19 @@
 #include <abi/itanium.hpp>
 #include <arch/tables/tss.hpp>
 #include <arch/tables/idt.hpp>
-#include <mm/virtual/vma_defs.hpp>
 #include <arch/tables/ist.hpp>
 #include <std/dsa/rbtree.hpp>
 #include <mm/virtual/page_table.hpp>
 #include <mm/stl.hpp>
+#include <utils/rng.hpp>
+#include <mm/virtual/aslr.hpp>
 
 extern "C" void kmain() {
   cxxabi::call_global_ctors();
   module::initialize_some(module::module_init_order::urgent);
+  utils::seed_generator::initialize();
+  mm::aslr_manager::initialize();
+
   arch::smp::core_manager::launch_all();
 
   bool r = mm::page_allocator::initialize();

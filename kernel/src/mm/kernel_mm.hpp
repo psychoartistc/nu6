@@ -3,7 +3,6 @@
 #include <mm/slub.hpp>
 #include <mm/virtual/page_table.hpp>
 #include <mm/virtual/vma_tree.hpp>
-#include <mm/virtual/vma_defs.hpp>
 #include <mm/physical/slub_backend.hpp>
 
 namespace mm {
