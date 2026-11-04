@@ -30,6 +30,9 @@ allocate_virtual(vma_tree<T> &tree, page_table &pt, std::size_t size,
       return std::unexpected<page_table::error_code>(res2.error());
   }
 
+  res->bypass_wxorx = bypass_wxorx;
+  res->protect = prot;
+
   // in demand paging, mapping and physical allocation
   // is done when a page fault occurs, so we ignore mapping here obviously
   // and return an unmapped address

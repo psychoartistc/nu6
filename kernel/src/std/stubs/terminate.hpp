@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utils/panic.hpp>
+
 namespace std {
-void terminate();
+void terminate() noexcept;
 }

@@ -37,7 +37,7 @@ void idt::initialize() {
   s_idtPtr.limit = sizeof(s_idt) - 1;
   s_idtPtr.base = reinterpret_cast<std::uint64_t>(s_idt.data());
 
-  s_logger.info("initialized");
+  // s_logger.info("initialized");
 }
 
 void idt::initialize_and_load() {
@@ -47,7 +47,7 @@ void idt::initialize_and_load() {
 
 void idt::reload() {
   asm volatile("lidt %0" : : "m"(s_idtPtr) : "memory");
-  s_logger.info("reloaded");
+  // s_logger.info("reloaded");
 }
 
 std::array<idt::entry, idt::ENTRY_COUNT> idt::s_idt{0};

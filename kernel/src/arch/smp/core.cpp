@@ -1,4 +1,5 @@
 #include <arch/smp/core.hpp>
+#include <proc/process.hpp>
 #include <utils/init_phase.hpp>
 #include <arch/stack.hpp>
 #include <mm/stl.hpp>
@@ -42,6 +43,8 @@ void core::on_launch(bool bsp) {
   if (bsp) {
     idt::initialize();
     irq::irq_dispatcher::install_handlers();
+    pr_info("core %zu loaded", m_index);
+
     irq::exceptions::install();
     idt::reload();
   }

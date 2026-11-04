@@ -5,7 +5,11 @@ namespace mm {
 static freelist_allocator s_freelist;
 
 bool page_allocator::initialize() {
-  return s_freelist.reclaim_type(LIMINE_MEMMAP_USABLE);
+  bool res = s_freelist.reclaim_type(LIMINE_MEMMAP_USABLE);
+  if (res)
+    pr_info("freelist initialized");
+
+  return res;
 }
 
 std::expected<std::uintptr_t, page_allocator::error_code>
@@ -24,11 +28,19 @@ bool page_allocator::free(std::uintptr_t at, std::uint64_t count) {
 }
 
 bool page_allocator::reclaim_acpi() {
-  return s_freelist.reclaim_type(LIMINE_MEMMAP_ACPI_RECLAIMABLE);
+  bool res = s_freelist.reclaim_type(LIMINE_MEMMAP_ACPI_RECLAIMABLE);
+  if (res)
+    pr_info("acpi regions reclaimed");
+
+  return res;
 }
 
 bool page_allocator::reclaim_bootloader() {
-  return s_freelist.reclaim_type(LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE);
+  bool res = s_freelist.reclaim_type(LIMINE_MEMMAP_ACPI_RECLAIMABLE);
+  if (res)
+    pr_info("bootloader page tables reclaimed");
+
+  return res;
 }
 
 } // namespace mm

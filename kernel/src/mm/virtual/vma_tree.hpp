@@ -22,6 +22,7 @@ struct vma {
 
   // this is not really used by the tree but by virtual_allocate
   bool mapped{false};
+  bool bypass_wxorx{false};
 };
 
 struct vma_less {
@@ -52,14 +53,22 @@ private:
   logging::named_logger m_logger{"vma_tree"};
 
 public:
+  vma_tree(std::pair<std::uintptr_t, std::uintptr_t> p)
+      : m_vasStart((p.first + PAGE_SIZE - 1) & ~std::uintptr_t(PAGE_SIZE - 1)),
+        m_vasEnd(p.second & ~std::uintptr_t(PAGE_SIZE - 1)) {
+    std::size_t bytes = m_vasEnd - m_vasStart;
+    std::array<char, utils::FMT_SIZE_BUFSIZE> buff{};
+    utils::fmt_size(buff, bytes);
+    m_logger.info("managing %s  virtual address space", buff.data());
+  }
+
   vma_tree(std::uintptr_t vasStart, std::uintptr_t vasEnd)
       : m_vasStart((vasStart + PAGE_SIZE - 1) & ~std::uintptr_t(PAGE_SIZE - 1)),
         m_vasEnd(vasEnd & ~std::uintptr_t(PAGE_SIZE - 1)) {
     std::size_t bytes = m_vasEnd - m_vasStart;
     std::array<char, utils::FMT_SIZE_BUFSIZE> buff{};
     utils::fmt_size(buff, bytes);
-    m_logger.info("managing %s (%zu bytes) virtual address space", buff.data(),
-                  bytes);
+    m_logger.info("managing %s  virtual address space", buff.data());
   }
 
   vma_tree(const vma_tree &) = delete;

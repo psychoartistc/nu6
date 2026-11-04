@@ -46,7 +46,7 @@ void gdt::initialize(std::uint64_t tss_base, std::uint32_t tss_limit) {
   set_gate(5, 0, 0, 0xF2, 0x00);
   set_gate(6, 0, 0, 0xFA, 0x20);
 
-  m_logger.info("initialized");
+  // m_logger.info("initialized");
 }
 
 void gdt::reload() {

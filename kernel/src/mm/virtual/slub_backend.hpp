@@ -8,7 +8,7 @@ namespace mm {
 static inline constexpr protection SLUB_SLAB_PROT =
     protection::read | protection::write | protection::kernel;
 
-static inline constexpr bool SLUB_SLAB_DEMAND_PAGING = false;
+static inline constexpr bool SLUB_SLAB_DEMAND_PAGING = true;
 
 static inline constexpr std::size_t SLUB_SLAB_SIZE = 16384;
 

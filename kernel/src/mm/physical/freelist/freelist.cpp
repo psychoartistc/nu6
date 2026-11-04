@@ -28,10 +28,6 @@ bool freelist_allocator::reclaim_type(std::uint64_t type) {
   std::uint64_t freeFrames = m_freeFrames.load(std::memory_order_relaxed);
   utils::fmt_size(buf, freeFrames * PAGE_SIZE);
 
-  m_logger.info(
-      "successfully reclaimed %zu pages (%s physical memory) of type %zu",
-      freeFrames, buf.data(), type);
-
   return true;
 }
 
