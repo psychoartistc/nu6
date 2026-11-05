@@ -23,6 +23,8 @@ private:
   std::uint64_t m_index{0};
   std::uint64_t m_lapicId{0};
 
+  bool m_bBsp = false;
+
 public:
   core(std::uint64_t idx, std::uint64_t lapic)
       : m_index(idx), m_lapicId(lapic) {}

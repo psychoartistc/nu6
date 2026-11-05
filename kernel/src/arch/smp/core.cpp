@@ -18,6 +18,7 @@ core &core::current() {
 }
 
 void core::on_launch(bool bsp) {
+  m_bBsp = bsp;
   // pr_info("core %zu on launch", m_index);
   //  wait until allocators are initialized
   utils::init_phase::wait_for(utils::e_init_states::allocator_ready);
