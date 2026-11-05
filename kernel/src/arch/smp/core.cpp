@@ -57,6 +57,12 @@ void core::on_launch(bool bsp) {
     idt::reload();
     irq_enable();
 
+    for (;;) {
+      auto *d = new int(4);
+      pr_info("%d 0x%p", *d, d);
+      delete d;
+    }
+
     arch::hcf();
   });
 }

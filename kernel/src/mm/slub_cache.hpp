@@ -7,7 +7,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-
+#include <std/embedded_freelist.hpp>
 #include <mm/slub_common.hpp>
 #include <string_view>
 #include <utility>
@@ -25,6 +25,24 @@ class slub_cache_impl {
       slub::align16(sizeof(slub_slab));
   static_assert(slabSize > SLAB_HEADER_AREA + HEADER_SIZE,
                 "slabSize too small");
+
+private:
+  std::string_view m_name;
+  slub_cache_impl *m_next = nullptr;
+  std::uint64_t m_id = 0;
+  std::size_t m_objectSize;
+  std::size_t m_slotSize;
+  std::size_t m_capacity;
+  Alloc m_alloc;
+
+  std::embedded_freelist m_freeStack{};
+  std::embedded_freelist m_spareSlabs{};
+  std::atomic<slub_slab *> m_allSlabs{nullptr};
+
+  std::atomic<std::uint32_t> m_activeOps{0};
+  std::atomic<bool> m_destroying{false};
+
+  std::array<std::atomic<slub_slab *>, arch::smp::MAX_CORES> m_cpuSlabs{};
 
 public:
   static constexpr std::size_t slab_capacity_for(std::size_t slot_size) {
@@ -196,37 +214,9 @@ private:
     }
   }
 
-  void free_object_push(void *node) {
-    using namespace slub;
-    auto current = m_freeStack.load(std::memory_order_acquire);
+  void free_object_push(void *node) { m_freeStack.push(node); }
 
-    for (;;) {
-      free_slot_set_next(node, unpack_pointer(current));
-      auto next = pack_pointer(node, unpack_tag(current) + 1);
-      if (m_freeStack.compare_exchange_weak(current, next,
-                                            std::memory_order_acq_rel,
-                                            std::memory_order_acquire))
-        return;
-    }
-  }
-
-  void *free_object_pop() {
-    using namespace slub;
-    auto current = m_freeStack.load(std::memory_order_acquire);
-    for (;;) {
-      void *top = unpack_pointer(current);
-      if (!top)
-        return nullptr;
-
-      auto next =
-          pack_pointer(free_slot_get_next(top), unpack_tag(current) + 1);
-
-      if (m_freeStack.compare_exchange_weak(current, next,
-                                            std::memory_order_acq_rel,
-                                            std::memory_order_acquire))
-        return top;
-    }
-  }
+  void *free_object_pop() { return m_freeStack.pop(); }
 
   void slab_list_push(slub_slab *slab) {
     auto current = m_allSlabs.load(std::memory_order_relaxed);
@@ -236,52 +226,11 @@ private:
         current, slab, std::memory_order_release, std::memory_order_relaxed));
   }
 
-  void spare_slab_push(slub_slab *slab) {
-    using namespace slub;
-    auto current = m_spareSlabs.load(std::memory_order_acquire);
-
-    for (;;) {
-      slab->spare_next = static_cast<slub_slab *>(unpack_pointer(current));
-      auto next = pack_pointer(slab, unpack_tag(current) + 1);
-      if (m_spareSlabs.compare_exchange_weak(current, next,
-                                             std::memory_order_acq_rel,
-                                             std::memory_order_acquire))
-        return;
-    }
-  }
+  void spare_slab_push(slub_slab *slab) { m_spareSlabs.push(slab); }
 
   slub_slab *spare_slab_pop() {
-    using namespace slub;
-    auto current = m_spareSlabs.load(std::memory_order_acquire);
-    for (;;) {
-      auto *top = static_cast<slub_slab *>(unpack_pointer(current));
-      if (!top)
-        return nullptr;
-
-      auto next = pack_pointer(top->spare_next, unpack_tag(current) + 1);
-      if (m_spareSlabs.compare_exchange_weak(current, next,
-                                             std::memory_order_acq_rel,
-                                             std::memory_order_acquire))
-        return top;
-    }
+    return reinterpret_cast<slub_slab *>(m_spareSlabs.pop());
   }
-
-  std::string_view m_name;
-  slub_cache_impl *m_next = nullptr;
-  std::uint64_t m_id = 0;
-  std::size_t m_objectSize;
-  std::size_t m_slotSize;
-  std::size_t m_capacity;
-  Alloc m_alloc;
-
-  std::atomic<std::uint64_t> m_freeStack{0};
-  std::atomic<std::uint64_t> m_spareSlabs{0};
-  std::atomic<slub_slab *> m_allSlabs{nullptr};
-
-  std::atomic<std::uint32_t> m_activeOps{0};
-  std::atomic<bool> m_destroying{false};
-
-  std::array<std::atomic<slub_slab *>, arch::smp::MAX_CORES> m_cpuSlabs{};
 };
 
 template <typename T, std::size_t slabSize, typename Alloc, bool dynBackend>
