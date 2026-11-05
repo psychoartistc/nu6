@@ -35,7 +35,8 @@ extern "C" void kmain() {
 
   arch::smp::core_manager::launch_all();
 
-  // removing these four lines would crash
+  // initialize pt and the vma tree
+  // removing these would crash
   auto &pt = mm::get_kernel_pt();
   auto &tree = mm::get_kernel_vma_tree();
   (void)pt;

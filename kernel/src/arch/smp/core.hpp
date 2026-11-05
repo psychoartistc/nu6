@@ -35,7 +35,11 @@ public:
 
   void set_current();
 
+  // ran in core_manager
   void on_launch(bool bsp = false);
+
+  // ran in on_launch after all the initialization
+  void on_start();
 
   static core &current();
 };
