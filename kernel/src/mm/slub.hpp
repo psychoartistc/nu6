@@ -124,7 +124,7 @@ public:
 
 private:
   slub_allocator() : slub_allocator(std::make_index_sequence<NUM_CLASSES>{}) {
-    utils::init_phase::checkpoint(utils::e_init_states::allocator_ready);
+    // utils::init_phase::checkpoint(utils::e_init_states::allocator_ready);
   }
 
   template <std::size_t... I>

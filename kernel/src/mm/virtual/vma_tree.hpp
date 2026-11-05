@@ -18,7 +18,7 @@ struct vma {
   // num of pages
   std::uint64_t count{0};
 
-  protection protect;
+  protection protect{protection::kernel | protection::read | protection::write};
 
   // this is not really used by the tree but by virtual_allocate
   bool mapped{false};
@@ -68,7 +68,8 @@ public:
     std::size_t bytes = m_vasEnd - m_vasStart;
     std::array<char, utils::FMT_SIZE_BUFSIZE> buff{};
     utils::fmt_size(buff, bytes);
-    m_logger.info("managing %s  virtual address space", buff.data());
+    m_logger.info("managing %s [0x%llx -> 0x%llx] virtual address space",
+                  buff.data(), m_vasStart, m_vasEnd);
   }
 
   vma_tree(const vma_tree &) = delete;
@@ -88,6 +89,8 @@ public:
     if (size == 0 || size > ~std::size_t(0) - (PAGE_SIZE - 1))
       return nullptr;
 
+    // pr_info("attempting to allocate %zu", size);
+
     std::uint64_t pages = (size + PAGE_SIZE - 1) / PAGE_SIZE;
 
     std::lock_guard<std::spinlock_mutex> lock(m_mtx);
@@ -100,6 +103,7 @@ public:
       if (limit > cursor && (limit - cursor) / PAGE_SIZE >= pages) {
         vma v{cursor, pages};
         auto a = m_rbtree.emplace_hint(it, v);
+        // pr_info("found!");
         return const_cast<vma *>(&(*a));
       }
 

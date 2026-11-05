@@ -26,6 +26,7 @@ void operator delete(void *p) noexcept {
 }
 
 void operator delete(void *ptr, unsigned long size) noexcept {
+  (void)size;
   static mm::slub_alloc_t &instance = mm::slub_alloc_t::get();
   instance.free(ptr);
 }

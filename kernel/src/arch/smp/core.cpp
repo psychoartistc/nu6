@@ -18,8 +18,11 @@ core &core::current() {
 }
 
 void core::on_launch(bool bsp) {
-  // wait until allocators are initialized
+  // pr_info("core %zu on launch", m_index);
+  //  wait until allocators are initialized
   utils::init_phase::wait_for(utils::e_init_states::allocator_ready);
+  // pr_info("after allocator ready");
+  ::mm::get_kernel_pt().switch_to();
   // all these stacks should never be
   // deleted when our kernel is ran
   m_stack = stack::new_kernel();
@@ -43,11 +46,12 @@ void core::on_launch(bool bsp) {
   if (bsp) {
     idt::initialize();
     irq::irq_dispatcher::install_handlers();
-    pr_info("core %zu loaded", m_index);
 
     irq::exceptions::install();
     idt::reload();
   }
+
+  pr_info("core %zu loaded", m_index);
 
   m_stack.enter([]() {
     idt::reload();

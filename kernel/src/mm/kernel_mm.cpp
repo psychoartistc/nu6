@@ -1,4 +1,5 @@
 #include <mm/kernel_mm.hpp>
+#include <mm/physical/page_allocator.hpp>
 #include <mm/slub.hpp>
 #include <mm/virtual/aslr.hpp>
 
@@ -18,6 +19,8 @@ static page_table &kpt_get_impl() {
   static page_table a{};
   a.clone_bootloader_pages();
   a.switch_to();
+
+  page_allocator::reclaim_bootloader();
 
   return a;
 }

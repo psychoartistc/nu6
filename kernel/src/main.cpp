@@ -29,13 +29,18 @@ extern "C" void kmain() {
   utils::seed_generator::initialize();
   mm::aslr_manager::initialize();
 
-  arch::smp::core_manager::launch_all();
-
   bool r = mm::page_allocator::initialize();
   if (!r)
     utils::panic("failed to initialize page allocator");
 
-  mm::slub_alloc_t &alloc = mm::slub_alloc_t::get();
+  arch::smp::core_manager::launch_all();
+
+  // removing these four lines would crash
+  auto &pt = mm::get_kernel_pt();
+  auto &tree = mm::get_kernel_vma_tree();
+  (void)pt;
+  (void)tree;
+
   utils::init_phase::checkpoint(utils::e_init_states::allocator_ready);
 
   arch::smp::core::current().on_launch(true);

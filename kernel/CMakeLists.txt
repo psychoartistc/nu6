@@ -41,6 +41,13 @@ set_target_properties(kernel PROPERTIES
 
 set(CMAKE_ASM_NASM_FLAGS "-g -F dwarf -i ${KERNEL_DIR}/src/ -Wall")
 
+set(TO_STRIP "${CMAKE_SOURCE_DIR}")
+
+string(REGEX MATCH "^([^/]+/[^/]+/[^/]+)" VISUAL_ROOT "${TO_STRIP}")
+
+set(TARGET_STRIP_DIR "${CMAKE_SOURCE_DIR}/kernel/src")
+
+
 set(KERNEL_COMMON_OPTIONS
     -g
     -O2
@@ -61,6 +68,7 @@ set(KERNEL_COMMON_OPTIONS
     -mno-red-zone
     -mcmodel=kernel
     -nostdinc
+    -fmacro-prefix-map=${TARGET_STRIP_DIR}/=
 )
 
 check_c_compiler_flag(-fno-stack-clash-protection HAS_C_NO_STACK_CLASH)

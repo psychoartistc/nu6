@@ -7,7 +7,7 @@ static freelist_allocator s_freelist;
 bool page_allocator::initialize() {
   bool res = s_freelist.reclaim_type(LIMINE_MEMMAP_USABLE);
   if (res)
-    pr_info("freelist initialized");
+    s_logger.info("freelist initialized");
 
   return res;
 }
@@ -30,7 +30,7 @@ bool page_allocator::free(std::uintptr_t at, std::uint64_t count) {
 bool page_allocator::reclaim_acpi() {
   bool res = s_freelist.reclaim_type(LIMINE_MEMMAP_ACPI_RECLAIMABLE);
   if (res)
-    pr_info("acpi regions reclaimed");
+    s_logger.info("acpi regions reclaimed");
 
   return res;
 }
@@ -38,7 +38,7 @@ bool page_allocator::reclaim_acpi() {
 bool page_allocator::reclaim_bootloader() {
   bool res = s_freelist.reclaim_type(LIMINE_MEMMAP_ACPI_RECLAIMABLE);
   if (res)
-    pr_info("bootloader page tables reclaimed");
+    s_logger.info("bootloader page tables reclaimed");
 
   return res;
 }

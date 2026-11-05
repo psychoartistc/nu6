@@ -7,7 +7,7 @@ void tss::initialize() {
 
   m_tss.io_map_base = sizeof(m_tss);
 
-  m_logger.info("initialized");
+  // m_logger.info("initialized");
 }
 
 void tss::set_ring0_stack(std::uint64_t stack_top) { m_tss.rsp[0] = stack_top; }

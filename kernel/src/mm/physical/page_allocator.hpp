@@ -2,11 +2,15 @@
 
 #include <cstdint>
 #include <expected>
+#include <logging/logging.hpp>
 
 namespace mm {
 class page_allocator {
 public:
   enum class error_code { no_mem, unimplemented, bad_arg };
+
+private:
+  static logging::named_logger s_logger;
 
 public:
   static bool initialize();

@@ -65,7 +65,8 @@ free_virtual(vma_tree<T> &tree, page_table &pt, void *ptr) {
   }
 
   area->mapped = false;
-  bool a = tree.free({area->address, area->count});
+  bool a = tree.free({area->address, area->count, area->protect,
+                      area->bypass_wxorx, area->mapped});
   if (!a) {
     pr_warn("failed to free vma 0x%p -> 0x%p back to tree", area->address,
             area->address + area->count * PAGE_SIZE);

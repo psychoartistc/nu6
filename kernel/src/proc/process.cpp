@@ -1,5 +1,3 @@
-#pragma once
-
 #include <memory>
 #include <proc/process.hpp>
 
