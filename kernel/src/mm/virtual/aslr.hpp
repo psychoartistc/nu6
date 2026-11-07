@@ -17,6 +17,9 @@ public:
   static inline constexpr std::uintptr_t KERNEL_VMA_SIZE =
       (16ULL * 1024 * 1024 * 1024 * 1024);
 
+  static inline constexpr std::uintptr_t MAX_OFFSET =
+      (KERNEL_VMA_END - KERNEL_VMA_START) - KERNEL_VMA_SIZE;
+
 private:
   static utils::rng s_rng;
 

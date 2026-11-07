@@ -66,11 +66,10 @@ void table_manager::parse_all() {
       reinterpret_cast<class rsdp *>(limine::rsdp_request.response->address);
 
   auto r = rsdp->validate();
-  if (r != rsdp::validate_fail_reason::ok) {
+  if (r != rsdp::validate_fail_reason::ok)
     utils::panic("bad rsdp signature! reason: %s", magic_enum::enum_name(r));
-  }
 
-  s_logger.info("using acpi v%d", rsdp->revision);
+  s_logger.info("using acpi %d.0", rsdp->revision);
   bool xsdt = (rsdp->revision >= 2 && rsdp->xsdt_address != 0);
 
   if (xsdt)

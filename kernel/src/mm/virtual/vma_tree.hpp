@@ -59,7 +59,8 @@ public:
     std::size_t bytes = m_vasEnd - m_vasStart;
     std::array<char, utils::FMT_SIZE_BUFSIZE> buff{};
     utils::fmt_size(buff, bytes);
-    m_logger.info("managing %s  virtual address space", buff.data());
+
+    m_logger.info("managing %s virtual address space", buff.data());
   }
 
   vma_tree(std::uintptr_t vasStart, std::uintptr_t vasEnd)
@@ -68,8 +69,9 @@ public:
     std::size_t bytes = m_vasEnd - m_vasStart;
     std::array<char, utils::FMT_SIZE_BUFSIZE> buff{};
     utils::fmt_size(buff, bytes);
-    m_logger.info("managing %s [0x%llx -> 0x%llx] virtual address space",
-                  buff.data(), m_vasStart, m_vasEnd);
+
+    m_logger.info("managing %s virtual address space", buff.data(), m_vasStart,
+                  m_vasEnd);
   }
 
   vma_tree(const vma_tree &) = delete;

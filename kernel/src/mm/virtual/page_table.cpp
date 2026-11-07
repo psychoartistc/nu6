@@ -7,6 +7,7 @@
 #include <utils/panic.hpp>
 #include <arch/mm/tlb.hpp>
 #include <mm/virtual/tlb.hpp>
+#include <vendor/magic_enum.hpp>
 
 namespace mm {
 
@@ -14,8 +15,8 @@ std::expected<std::uintptr_t, page_allocator::error_code>
 page_table::alloc_table() {
   auto res = page_allocator::allocate(1);
   if (!res) {
-    m_logger.warn("failed to allocate page table! error: %d",
-                  static_cast<int>(res.error()));
+    m_logger.warn("failed to allocate page table! error: %s",
+                  magic_enum::enum_name(res.error()));
     return res;
   }
 
@@ -68,8 +69,8 @@ page_table::clone_level(std::uint64_t *dst, const std::uint64_t *src,
 page_table::page_table() {
   auto res = alloc_table();
   if (!res)
-    utils::panic("error when allocating kernel pml4: %d",
-                 static_cast<int>(res.error()));
+    utils::panic("error when allocating kernel pml4: %s",
+                 magic_enum::enum_name(res.error()));
 
   m_pml4Phys = *res;
 }
@@ -83,7 +84,7 @@ void page_table::clone_bootloader_pages() {
 
   if (!res)
     utils::panic("error when cloning bootloader pages: %d",
-                 static_cast<int>(res.error()));
+                 magic_enum::enum_name(res.error()));
   // m_logger.info("done cloning");
 }
 

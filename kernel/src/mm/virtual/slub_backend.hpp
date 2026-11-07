@@ -3,6 +3,7 @@
 #include <mm/slub.hpp>
 #include <mm/virtual/allocator.hpp>
 #include <mm/kernel_mm.hpp>
+#include <vendor/magic_enum.hpp>
 
 namespace mm {
 static inline constexpr protection SLUB_SLAB_PROT =
@@ -22,8 +23,8 @@ public:
         get_kernel_vma_tree(), get_kernel_pt(), size, SLUB_SLAB_PROT,
         !SLUB_SLAB_DEMAND_PAGING, false);
     if (!res) {
-      m_logger.warn("bad allocation! size: %zu, error: %d", size,
-                    static_cast<int>(res.error()));
+      m_logger.warn("bad allocation! size: %zu, error: %s", size,
+                    magic_enum::enum_name(res.error()));
       return nullptr;
     }
 
@@ -35,8 +36,8 @@ public:
     auto res = free_virtual<kernel_vma_allocator_t>(get_kernel_vma_tree(),
                                                     get_kernel_pt(), p);
     if (!res) {
-      m_logger.warn("failed to free virtual! size: %zu, error: %d", s,
-                    static_cast<int>(res.error()));
+      m_logger.warn("failed to free virtual! size: %zu, error: %s", s,
+                    magic_enum::enum_name(res.error()));
       return;
     }
   }

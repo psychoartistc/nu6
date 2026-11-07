@@ -13,7 +13,6 @@ public:
     if (!res)
       return nullptr;
 
-    pr_info("allocated phys at 0x%p", p2v(*res));
     return p2v(*res);
   }
 

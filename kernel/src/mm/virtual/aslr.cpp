@@ -39,31 +39,15 @@ void aslr_manager::initialize() {
 }
 
 std::pair<std::uintptr_t, std::uintptr_t> aslr_manager::generate_kernel() {
-  constexpr auto size = KERNEL_VMA_SIZE;
+  std::uint64_t start = KERNEL_VMA_START + random_offset(MAX_OFFSET);
 
-  constexpr auto window_size = KERNEL_VMA_END - KERNEL_VMA_START;
-
-  static_assert(window_size >= size);
-
-  constexpr auto max_offset = window_size - size;
-
-  auto start = KERNEL_VMA_START + random_offset(max_offset);
-
-  return {start, start + size};
+  return {start, start + KERNEL_VMA_SIZE};
 }
 
 std::pair<std::uintptr_t, std::uintptr_t> aslr_manager::generate_user() {
-  constexpr auto size = USER_VMA_SIZE;
+  auto start = USER_VMA_START + random_offset(MAX_OFFSET);
 
-  constexpr auto window_size = USER_VMA_END - USER_VMA_START + 1;
-
-  static_assert(window_size >= size);
-
-  constexpr auto max_offset = window_size - size;
-
-  auto start = USER_VMA_START + random_offset(max_offset);
-
-  return {start, start + size};
+  return {start, start + USER_VMA_SIZE};
 }
 
 utils::rng aslr_manager::s_rng{};
