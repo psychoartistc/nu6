@@ -3,7 +3,7 @@
 #include <mm/virtual/vma_tree.hpp>
 #include <utils/math.hpp>
 #include <limine.h>
-#include <std/enums.hpp>
+#include <vendor/magic_enum.hpp>
 #include <mm/physical/page_allocator.hpp>
 #include <arch/tables/gdt.hpp>
 #include <logging/logging.hpp>

@@ -1,4 +1,5 @@
 #include "arch/mm/paging.hpp"
+#include <vendor/magic_enum.hpp>
 #include <std/spinlock.hpp>
 #include <std/lock_guard.hpp>
 #include <mm/virtual/page_table.hpp>
@@ -79,6 +80,7 @@ void page_table::clone_bootloader_pages() {
 
   auto res =
       clone_level(reinterpret_cast<std::uint64_t *>(p2v(m_pml4Phys)), src, 4);
+
   if (!res)
     utils::panic("error when cloning bootloader pages: %d",
                  static_cast<int>(res.error()));

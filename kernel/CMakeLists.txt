@@ -1,6 +1,12 @@
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 
+set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+
 if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.deps-obtained)
     execute_process(
         COMMAND ./get-deps
@@ -55,8 +61,10 @@ set(KERNEL_COMMON_OPTIONS
     -Wall
     -Wextra
     -ffreestanding
+    -fstack-protector-strong
+    -fstack-protector-all
     -fno-common
-    -fno-stack-protector
+   # -fno-stack-protector
     -fno-stack-check
     -fno-PIC
     -ffunction-sections
@@ -78,7 +86,7 @@ check_cxx_compiler_flag(-fno-stack-clash-protection HAS_CXX_NO_STACK_CLASH)
 check_cxx_compiler_flag(-fcf-protection=none HAS_CXX_CF_NONE)
 check_cxx_compiler_flag(-mno-80387 HAS_CXX_NO_80387)
 
-set(KERNEL_C_OPTIONS -std=gnu11)
+#set(KERNEL_C_OPTIONS -std=c23)
 #if(HAS_C_NO_STACK_CLASH)
 #     list(APPEND KERNEL_C_OPTIONS -fno-stack-clash-protection)
 #endif()
@@ -89,7 +97,7 @@ if(HAS_C_NO_80387)
     list(APPEND KERNEL_C_OPTIONS -mno-80387)
 endif()
 
-set(KERNEL_CXX_OPTIONS -std=c++23 -fno-rtti -fno-exceptions)
+set(KERNEL_CXX_OPTIONS -fno-rtti -std=c++26 -fno-exceptions)
 #if(HAS_CXX_NO_STACK_CLASH)
   # list(APPEND KERNEL_CXX_OPTIONS -fno-stack-clash-protection)
 #endif()
@@ -109,6 +117,7 @@ target_compile_options(kernel PRIVATE
 target_compile_definitions(kernel PRIVATE
     PAGE_ALLOC_USE_FREELIST
     "__noreturn__="
+   __builtin_c23_va_start=__builtin_va_start
 )
 
 target_include_directories(kernel PRIVATE
@@ -142,3 +151,4 @@ target_link_options(kernel PRIVATE
     -Wl,-T,${KERNEL_DIR}/link.lds
     -Wl,-m,elf_x86_64
 )
+

@@ -15,8 +15,8 @@ private:
 
 private:
   static void dispatch_parse(table_header *tbl);
-  static void parse_rsdt(rsdp_contents *rsdp);
-  static void parse_xsdt(rsdp_contents *rsdp);
+  static void parse_rsdt(rsdp *rsdp);
+  static void parse_xsdt(rsdp *rsdp);
 
 public:
   template <std::derived_from<table_parser> T> static void add_parser() {

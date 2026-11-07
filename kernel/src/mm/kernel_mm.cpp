@@ -20,7 +20,7 @@ static page_table &kpt_get_impl() {
   a.clone_bootloader_pages();
   a.switch_to();
 
-  page_allocator::reclaim_bootloader();
+  // page_allocator::reclaim_bootloader();
 
   return a;
 }
