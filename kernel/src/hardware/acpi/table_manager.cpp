@@ -9,33 +9,41 @@ logging::named_logger table_manager::s_logger{"acpi"};
 
 void table_manager::dispatch_parse(table_header *hdr) {
   std::string_view signature(hdr->signature, 4);
+  s_logger.info("parsing %.4s", signature.data());
   for (const std::unique_ptr<table_parser> &parser : s_parsers) {
     if (signature != parser->table_name())
       continue;
 
     bool success = parser->parse(hdr);
     if (!success)
-      s_logger.error("failed to parse acpi table \'%.4s\'!", signature);
+      s_logger.error("failed to parse acpi table \'%.4s\'!", signature.data());
   }
 }
 
-void table_manager::parse_rsdt(rsdp_contents *rsdp) {
+void table_manager::parse_xsdt(rsdp_contents *rsdp) {
   xsdt_contents *xsdt =
       reinterpret_cast<xsdt_contents *>(mm::p2v(rsdp->xsdt_address));
 
+  s_logger.info("xsdt physical at 0x%p, virtual at 0x%p", rsdp->xsdt_address,
+                xsdt);
+
   std::size_t entry_count =
       (xsdt->header.length - sizeof(table_header)) / sizeof(std::uint64_t);
+  s_logger.info("entry count %zu", entry_count);
+
+  auto *tables = reinterpret_cast<std::uint64_t *>(
+      reinterpret_cast<std::uintptr_t>(xsdt) + sizeof(table_header));
   for (std::size_t i = 0; i < entry_count; i++) {
-    table_header *tb =
-        reinterpret_cast<table_header *>(mm::p2v(xsdt->tables[i]));
+    table_header *tb = reinterpret_cast<table_header *>(mm::p2v(tables[i]));
 
     dispatch_parse(tb);
   }
 }
 
-void table_manager::parse_xsdt(rsdp_contents *rsdp) {
+void table_manager::parse_rsdt(rsdp_contents *rsdp) {
   rsdt_contents *rsdt =
       reinterpret_cast<rsdt_contents *>(mm::p2v(rsdp->rsdt_address));
+
   std::uintptr_t rsdt_virt = reinterpret_cast<std::uintptr_t>(rsdt);
 
   std::size_t entry_count =
@@ -58,6 +66,11 @@ void table_manager::parse_all() {
 
   rsdp_contents *rsdp =
       reinterpret_cast<rsdp_contents *>(limine::rsdp_request.response->address);
+
+  pr_info("rsdp signature: %.8s", rsdp->signature);
+
+  pr_info("rsdp at 0x%p, rsdt at 0x%p, xsdt at 0x%p", rsdp, rsdp->rsdt_address,
+          rsdp->xsdt_address);
 
   s_logger.info("using acpi v%d", rsdp->revision);
   bool xsdt = (rsdp->revision >= 2 && rsdp->xsdt_address != 0);

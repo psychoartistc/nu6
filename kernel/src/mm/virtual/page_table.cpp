@@ -82,7 +82,7 @@ void page_table::clone_bootloader_pages() {
   if (!res)
     utils::panic("error when cloning bootloader pages: %d",
                  static_cast<int>(res.error()));
-  m_logger.info("done cloning");
+  // m_logger.info("done cloning");
 }
 
 void page_table::tlb_flush(const tlb::flush_batch &batch) {

@@ -35,7 +35,6 @@ struct [[gnu::packed]] rsdt_contents {
 
 struct [[gnu::packed]] xsdt_contents {
   table_header header;
-  std::uint64_t tables[];
 };
 
 struct [[gnu::packed]] gas_contents {
