@@ -25,6 +25,9 @@ struct [[gnu::packed]] madt_ioapic {
 };
 
 class madt_parser : public table_parser {
+private:
+  static inline constexpr std::uint32_t IOAPIC_CODE = 1;
+
 public:
   ~madt_parser() = default;
 
