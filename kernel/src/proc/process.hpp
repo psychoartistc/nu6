@@ -1,26 +1,29 @@
 #pragma once
 
 #include <optional>
+#include <std/vendor/veque.hpp>
 #include <mm/address_space.hpp>
 #include <memory>
 
 namespace proc {
 class process : public std::enable_shared_from_this<process> {
-private:
-  // if this is null that means we are in kernel space
-  static std::shared_ptr<process> s_pCurrent;
+public:
+  using pointer = std::shared_ptr<process>;
 
 private:
+  // if this is null that means we are in kernel space
+private:
   mm::address_space m_addressSpace;
+  std::vector<pointer> m_children;
 
 public:
   void set_current();
 
-  void on_page_fault(std::uintptr_t fault);
+  void on_exception();
 
   mm::address_space &address_space();
 
-  static std::shared_ptr<process> current();
+  static pointer current();
   static void enter_kernel();
 };
 } // namespace proc
