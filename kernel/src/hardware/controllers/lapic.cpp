@@ -5,6 +5,21 @@
 #include <arch/io/msr.hpp>
 
 namespace hardware::ctl {
+std::uint32_t lapic::read(std::uint32_t reg) {
+  if (s_isX2Apic)
+    return static_cast<std::uint32_t>(
+        arch::io::rdmsr(MSR_X2APIC_BASE + (reg >> 4)));
+
+  return s_mmio.read<std::uint32_t>(reg);
+}
+
+void lapic::write(std::uint32_t reg, std::uint32_t value) {
+  if (s_isX2Apic)
+    arch::io::wrmsr(MSR_X2APIC_BASE + (reg >> 4), value);
+  else
+    s_mmio.write<std::uint32_t>(reg, value);
+}
+
 void lapic::initialize(std::uintptr_t base) {
   s_physBase = base;
   s_isX2Apic = (arch::io::rdmsr(MSR_IA32_APIC_BASE) & APIC_BASE_X2APIC_EN) != 0;
@@ -26,6 +41,16 @@ void lapic::initialize(std::uintptr_t base) {
                 s_isX2Apic ? "yes" : "no");
 
   s_mmio.change_address(vma->address);
+}
+
+void lapic::eoi() { write(LAPIC_EOI, 0); }
+
+void lapic::ipi_except_self(std::uint8_t vec) {
+  while (read(LAPIC_REG_ICR_LOW) & LAPIC_ICR_DELIVERY_STATUS)
+    arch::pause();
+
+  std::uint32_t licr = vec | (0 << 8) | LAPIC_ICR_SHORTHAND_ALL_BUT_SELF;
+  write(LAPIC_REG_ICR_LOW, licr);
 }
 
 std::uintptr_t lapic::s_physBase{0x0};
