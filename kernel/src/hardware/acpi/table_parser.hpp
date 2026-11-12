@@ -8,7 +8,7 @@ namespace acpi {
 // abstract type for a parser of some table
 class table_parser {
 public:
-  virtual ~table_parser();
+  virtual ~table_parser() {}
 
   virtual inline constexpr std::string_view table_name() const = 0;
 

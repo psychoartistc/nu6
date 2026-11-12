@@ -6,6 +6,7 @@
 #include <arch/tables/gdt.hpp>
 #include <arch/tables/idt.hpp>
 #include <arch/tables/ist.hpp>
+#include <hardware/controllers/lapic.hpp>
 #include <arch/tables/tss.hpp>
 
 namespace arch::smp {
@@ -17,6 +18,8 @@ private:
   tss m_tss{};
   gdt m_gdt{};
   ist m_ist{};
+
+  hardware::ctl::lapic m_lapic{};
 
   stack m_stack{0x0};
 

@@ -2,7 +2,7 @@
 #include <proc/process.hpp>
 
 namespace proc {
-void process::on_page_fault(std::uintptr_t fault) {
+void process::on_exception(std::uint64_t fault) {
   pr_info("0x%p faulted in userland!", fault);
 }
 

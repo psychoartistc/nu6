@@ -20,5 +20,9 @@ public:
   template <std::integral T> void write(std::uint64_t offset, T val) {
     *reinterpret_cast<T *>(m_address + offset) = val;
   }
+
+  inline void change_address(std::uintptr_t a) {
+    m_address = reinterpret_cast<std::uint8_t *>(a);
+  }
 };
 } // namespace utils

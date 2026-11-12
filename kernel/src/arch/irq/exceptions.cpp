@@ -7,7 +7,7 @@
 #include <mm/virtual/allocator.hpp>
 
 namespace arch::irq {
-void handle_page_fault() {
+void exceptions::handle_page_fault() {
   namespace kmm = ::mm;
 
   std::uintptr_t faulting = arch::mm::read_cr2();
@@ -35,10 +35,9 @@ void handle_page_fault() {
 
   kmm::vma *found = tree.find(faulting);
   if (!found)
-    currentProc->on_page_fault(faulting);
-  else {
+    currentProc->on_exception(CPU_EXCEPT_PAGE_FAULT);
+  else
     auto res = kmm::map_vma(pt, *found, found->protect, found->bypass_wxorx);
-  }
 }
 
 void exceptions::install() {

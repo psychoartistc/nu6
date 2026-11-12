@@ -1,5 +1,6 @@
 #include <hardware/acpi/table_manager.hpp>
 #include <vendor/magic_enum.hpp>
+#include <modules/api.hpp>
 #include <limine/requests.hpp>
 #include <mm/common.hpp>
 
@@ -58,6 +59,9 @@ void table_manager::parse_rsdt(rsdp *rsdp) {
 }
 
 void table_manager::parse_all() {
+  // populate the vector
+  module::initialize_some(module::module_init_order::acpi_parser_populate);
+
   auto *resp = limine::rsdp_request.response;
   if (!resp)
     return;

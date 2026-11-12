@@ -16,10 +16,12 @@ private:
   mm::address_space m_addressSpace;
   std::vector<pointer> m_children;
 
+  static pointer s_pCurrent;
+
 public:
   void set_current();
 
-  void on_exception();
+  void on_exception(std::uint64_t int_no);
 
   mm::address_space &address_space();
 

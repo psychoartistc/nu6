@@ -59,6 +59,7 @@ public:
                                CPU_EXCEPT_DEBUG, CPU_EXCEPT_MACHINE_CHECK};
 
 public:
+  static void handle_page_fault();
   static void install();
 };
 } // namespace irq

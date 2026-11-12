@@ -1,6 +1,7 @@
 #pragma once
 
 #include <hardware/acpi/table_parser.hpp>
+#include <logging/logging.hpp>
 
 namespace hardware::acpi {
 
@@ -27,6 +28,9 @@ struct [[gnu::packed]] madt_ioapic {
 class madt_parser : public table_parser {
 private:
   static inline constexpr std::uint32_t IOAPIC_CODE = 1;
+
+private:
+  logging::named_logger m_logger{"madt_parser"};
 
 public:
   ~madt_parser() = default;
