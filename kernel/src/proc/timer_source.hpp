@@ -18,14 +18,14 @@ private:
   static timer_source *s_pCurrent;
   static logging::named_logger s_logger;
 
-private:
+public:
   static void initialize_sources();
 
   inline constexpr virtual std::uint8_t type() const = 0;
   inline constexpr virtual std::string_view name() const = 0;
   inline constexpr virtual bool is_local() const = 0;
 
-  virtual ~timer_source();
+  virtual ~timer_source() {}
 
   virtual std::uint64_t now_ns() = 0;
 

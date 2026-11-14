@@ -16,6 +16,15 @@ template <std::integral T> constexpr T div_floor(T a, T b) {
   return q;
 }
 
+template <std::integral T> constexpr T div_ceil(T a, T b) {
+  T q = a / b;
+  T r = a % b;
+  if (r != 0 && ((a ^ b) >= 0))
+    q++;
+
+  return q;
+}
+
 template <std::integral T> static constexpr T align_up(T v, T a) noexcept {
   return (v + a - 1) & ~(a - 1);
 }
