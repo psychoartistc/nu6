@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <utils/mmio.hpp>
+#include <logging/logging.hpp>
 
 #define HPET_TIMER_CONFIG(n) (0x100 + 0x20 * (n))
 #define HPET_TIMER_COMPARE(n) (0x108 + 0x20 * (n))
@@ -43,13 +44,16 @@ private:
   static inline constexpr std::uint64_t IRQ_VECTOR = 52;
 
 private:
+  static std::uintptr_t m_base;
+
+  logging::named_logger m_logger{"hpet"};
   utils::mmio m_mmio;
   std::uint64_t m_periodFs = 0;
   std::uint32_t m_nrTimers = 0;
 
   bool m_bCounter64 = false;
   bool m_bUse64Compare = false;
-  bool m_bReady = false;
+  bool m_bOk = false;
   bool m_bStarted = false;
 
 private:
@@ -57,6 +61,10 @@ private:
   std::expected<std::uint64_t, error_code> ns_to_ticks(std::uint64_t ns);
 
 public:
-  void arm_ns(std::uint64_t ns);
+  static void set_physical_base(std::uintptr_t base);
+
+  std::expected<void, error_code> initialize();
+  std::expected<void, error_code> arm_ns(std::uint64_t ns);
+  std::expected<void, error_code> start(std::uint64_t deadline);
 };
 } // namespace proc::timers
