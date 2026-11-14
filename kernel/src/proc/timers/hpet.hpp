@@ -62,7 +62,7 @@ private:
   static std::uintptr_t s_base;
 
   logging::named_logger m_logger{"hpet"};
-  utils::mmio m_mmio;
+  utils::mmio m_mmio{0x0};
   std::uint64_t m_periodFs = 0;
   std::uint32_t m_nrTimers = 0;
 

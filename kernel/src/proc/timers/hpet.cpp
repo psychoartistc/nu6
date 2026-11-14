@@ -108,11 +108,11 @@ hpet::initialize(std::function<void(arch::interrupt_frame *)> fn) {
   auto &tree = mm::get_kernel_vma_tree();
   auto &pt = mm::get_kernel_pt();
 
-  auto res = tree.allocate(4096);
+  mm::vma *res = tree.allocate(4096);
   if (!res)
     return std::unexpected<error_code>(error_code::no_virtual_mem);
 
-  auto res2 = pt.map(s_base, res->address, MMIO_PROT);
+  auto res2 = pt.map(s_base, res->address, utils::mmio::PROT);
   if (!res2)
     return std::unexpected<error_code>(error_code::map_error);
 
@@ -159,7 +159,7 @@ hpet::initialize(std::function<void(arch::interrupt_frame *)> fn) {
   m_mmio.write<std::uint64_t>(tcfg_offset, tcfg);
 
   arch::irq::irq_dispatcher::set(static_cast<std::uint8_t>(IRQ_VECTOR), fn);
-  hardware::ctl::ioapic::all()[0].
+  hardware::ctl::ioapic::all()[]
 }
 
 void hpet::set_physical_base(std::uintptr_t base) { s_base = base; }

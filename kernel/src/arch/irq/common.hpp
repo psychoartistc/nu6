@@ -1,5 +1,6 @@
 #pragma once
 
+#include <arch/cpuid.hpp>
 #include <cstdint>
 
 namespace arch {
@@ -12,7 +13,15 @@ static inline constexpr std::uint64_t read_rflags() {
                : "=r"(rflags)
                :
                : "memory");
+
   return rflags;
+}
+
+static inline std::uint8_t read_boot_apic() {
+  std::uint32_t eax = 1, ebx, ecx, edx;
+  cpuid(&eax, &ebx, &ecx, &edx);
+
+  return static_cast<std::uint8_t>(ebx >> 24);
 }
 } // namespace irq
 } // namespace arch

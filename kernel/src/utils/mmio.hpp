@@ -1,11 +1,17 @@
 #pragma once
 
+#include <mm/virtual/protection.hpp>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 
 namespace utils {
 class mmio {
+public:
+  static inline constexpr mm::protection PROT =
+      mm::protection::kernel | mm::protection::read | mm::protection::write |
+      mm::protection::nocache;
+
 private:
   std::uint8_t *m_address = nullptr;
 

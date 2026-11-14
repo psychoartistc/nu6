@@ -13,4 +13,12 @@ static inline void cpuid(std::uint32_t leaf, std::uint32_t *eax,
                : "=a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx)
                : "a"(leaf));
 }
+
+static inline void cpuid(std::uint32_t *eax, std::uint32_t *ebx,
+                         std::uint32_t *ecx, std::uint32_t *edx) {
+  asm volatile("cpuid"
+               : "+a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+               :
+               : "memory");
+}
 } // namespace arch
