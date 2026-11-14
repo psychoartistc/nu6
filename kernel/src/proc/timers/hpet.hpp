@@ -1,10 +1,12 @@
 #pragma once
 
+#include <arch/irq/irq_dispatcher.hpp>
 #include <expected>
 #include <cstddef>
 #include <cstdint>
 #include <utils/mmio.hpp>
 #include <logging/logging.hpp>
+#include <mm/virtual/protection.hpp>
 
 #define HPET_TIMER_CONFIG(n) (0x100 + 0x20 * (n))
 #define HPET_TIMER_COMPARE(n) (0x108 + 0x20 * (n))
@@ -12,9 +14,22 @@
 namespace proc::timers {
 class hpet {
 private:
-  enum class error_code { overflow, deadline_too_large, not_calibrated };
+  enum class error_code {
+    overflow,
+    deadline_too_large,
+    invalid_counter,
+    timer_unimplemented,
+    route_not_supported,
+    no_physical_base,
+    no_virtual_mem,
+    map_error
+  };
 
 private:
+  static inline constexpr mm::protection MMIO_PROT =
+      mm::protection::kernel | mm::protection::read | mm::protection::write |
+      mm::protection::nocache;
+
   static inline constexpr std::uint64_t CAP = 0x000;
   static inline constexpr std::uint64_t GEN_CONFIG = 0x010;
   static inline constexpr std::uint64_t INT_STATUS = 0x020;
@@ -44,7 +59,7 @@ private:
   static inline constexpr std::uint64_t IRQ_VECTOR = 52;
 
 private:
-  static std::uintptr_t m_base;
+  static std::uintptr_t s_base;
 
   logging::named_logger m_logger{"hpet"};
   utils::mmio m_mmio;
@@ -63,7 +78,8 @@ private:
 public:
   static void set_physical_base(std::uintptr_t base);
 
-  std::expected<void, error_code> initialize();
+  std::expected<void, error_code>
+  initialize(std::function<void(arch::interrupt_frame *)> irq);
   std::expected<void, error_code> arm_ns(std::uint64_t ns);
   std::expected<void, error_code> start(std::uint64_t deadline);
 };

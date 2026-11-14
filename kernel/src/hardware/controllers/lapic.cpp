@@ -30,9 +30,7 @@ void lapic::initialize(std::uintptr_t base) {
   assert(vma && "failed to allocate vma for lapic, fatal");
 
   auto &pt = mm::get_kernel_pt();
-  auto res = pt.map(base, vma->address,
-                    mm::protection::kernel | mm::protection::nocache |
-                        mm::protection::write | mm::protection::read);
+  auto res = pt.map(base, vma->address, MMIO_PROT);
   if (!res)
     utils::panic("failed to map lapic to virtual memory, fatal: %s",
                  magic_enum::enum_name(res.error()));

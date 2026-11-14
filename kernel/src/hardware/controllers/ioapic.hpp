@@ -8,6 +8,9 @@
 namespace hardware::ctl {
 class ioapic {
 private:
+  enum class error_code {};
+
+private:
   static std::vector<ioapic> s_ioapics;
 
   acpi::madt_ioapic m_madtEntry{};

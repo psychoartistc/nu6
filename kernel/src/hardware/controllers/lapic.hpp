@@ -4,10 +4,15 @@
 #include <utils/mmio.hpp>
 #include <cstddef>
 #include <cstdint>
+#include <mm/virtual/protection.hpp>
 
 namespace hardware::ctl {
 class lapic {
 private:
+  static inline constexpr mm::protection MMIO_PROT =
+      mm::protection::kernel | mm::protection::read | mm::protection::write |
+      mm::protection::nocache;
+
   static inline constexpr std::uint64_t MSR_IA32_APIC_BASE = 0x01B;
   static inline constexpr std::uint64_t MSR_IA32_TSC_DEADLINE = 0x6E0;
   static inline constexpr std::uint64_t MSR_X2APIC_BASE = 0x800;
