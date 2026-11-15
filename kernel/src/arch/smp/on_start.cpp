@@ -1,4 +1,5 @@
 #include <arch/smp/core.hpp>
+#include <arch/tsc.hpp>
 #include <proc/timer_source.hpp>
 #include <hardware/acpi/table_manager.hpp>
 
