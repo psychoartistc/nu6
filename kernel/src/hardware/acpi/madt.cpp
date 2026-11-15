@@ -1,4 +1,5 @@
 #include <hardware/acpi/madt.hpp>
+#include <vendor/magic_enum.hpp>
 #include <modules/api.hpp>
 #include <hardware/acpi/table_manager.hpp>
 #include <hardware/controllers/pic8259.hpp>
@@ -18,8 +19,18 @@ bool madt_parser::parse(table_header *hdr) {
   while (current < end) {
     madt_entry_header *entry = reinterpret_cast<madt_entry_header *>(current);
 
-    if (entry->type == IOAPIC_CODE)
-      ctl::ioapic::all().emplace_back(*reinterpret_cast<madt_ioapic *>(entry));
+    if (entry->type == IOAPIC_CODE) {
+      std::unique_ptr<ctl::ioapic> ioapic = std::make_unique<ctl::ioapic>(
+          *reinterpret_cast<madt_ioapic *>(entry));
+
+      if (!ioapic->initialized()) {
+        m_logger.info("failed to add ioapic: %s",
+                      magic_enum::enum_name(ioapic->err_code()));
+        continue;
+      }
+
+      auto &ioapicref = ctl::ioapic::all().emplace_back(std::move(ioapic));
+    }
 
     if (entry->length == 0)
       break;

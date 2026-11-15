@@ -1,4 +1,5 @@
 #include <proc/timers/hpet.hpp>
+#include <vendor/magic_enum.hpp>
 #include <hardware/controllers/ioapic.hpp>
 #include <mm/kernel_mm.hpp>
 #include <proc/timers/pit.hpp>
@@ -17,7 +18,7 @@ std::uint64_t hpet::read_counter() {
 std::expected<std::uint64_t, hpet::error_code>
 hpet::ns_to_ticks(std::uint64_t ns) {
   std::uint128_t scaled = (std::uint128_t)ns * 1000000ULL;
-  scaled = utils::div_ceil<std::uint128_t>(scaled, m_periodFs);
+  scaled = (scaled + m_periodFs - 1) / m_periodFs;
 
   if (scaled < 1)
     scaled = 1;
@@ -69,7 +70,16 @@ std::expected<void, hpet::error_code> hpet::arm_ns(std::uint64_t ns) {
 
   m_mmio.write<std::uint64_t>(tcfg_offset, tcfg | TN_INT_ENABLE);
 
+  m_logger.info("armed");
   return {};
+}
+
+std::uint64_t hpet::now_ns() {
+  std::uint64_t ticks = read_counter();
+  std::uint128_t ns =
+      static_cast<std::uint128_t>(ticks) * m_periodFs / 1000000ULL;
+
+  return static_cast<std::uint64_t>(ns);
 }
 
 std::expected<void, hpet::error_code> hpet::start(std::uint64_t deadline) {
@@ -92,7 +102,7 @@ std::expected<void, hpet::error_code> hpet::start(std::uint64_t deadline) {
 
   m_bStarted = true;
 
-  m_logger.info("timer started with initial delay %llu ns", deadline);
+  m_logger.info("timer started with initial deadline %llu ns", deadline);
 
   return {};
 }
@@ -108,7 +118,7 @@ hpet::initialize(std::function<void(arch::interrupt_frame *)> fn) {
   auto &tree = mm::get_kernel_vma_tree();
   auto &pt = mm::get_kernel_pt();
 
-  mm::vma *res = tree.allocate(4096);
+  mm::vma *res = tree.allocate(mm::PAGE_SIZE);
   if (!res)
     return std::unexpected<error_code>(error_code::no_virtual_mem);
 
@@ -159,7 +169,22 @@ hpet::initialize(std::function<void(arch::interrupt_frame *)> fn) {
   m_mmio.write<std::uint64_t>(tcfg_offset, tcfg);
 
   arch::irq::irq_dispatcher::set(static_cast<std::uint8_t>(IRQ_VECTOR), fn);
-  hardware::ctl::ioapic::all()[]
+  auto &ioapic = hardware::ctl::ioapic::all()[0];
+
+  // pr_info("%d, %d", IRQ_ROUTE, static_cast<std::uint8_t>(IRQ_VECTOR));
+  auto res3 =
+      ioapic->route_irq(IRQ_ROUTE, static_cast<std::uint8_t>(IRQ_VECTOR));
+  if (!res3) {
+    m_logger.warn("failed to route hpet interrupt: %s",
+                  magic_enum::enum_name(res3.error()));
+    return std::unexpected<error_code>(error_code::ioapic_error);
+  }
+
+  m_bOk = true;
+
+  m_logger.info("hpet at 0x%p", res->address);
+
+  return {};
 }
 
 void hpet::set_physical_base(std::uintptr_t base) { s_base = base; }

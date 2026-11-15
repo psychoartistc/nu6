@@ -9,7 +9,8 @@ enum class module_init_order {
   urgent = 0,
   after_mem = 1,
   acpi_parser_populate = 2,
-  normal = 3,
+  timer_source_populate = 3,
+  normal = 4,
 };
 
 inline constexpr std::string_view MDLLICENSE_GPL = "GPL";

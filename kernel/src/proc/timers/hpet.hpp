@@ -22,6 +22,7 @@ private:
     route_not_supported,
     no_physical_base,
     no_virtual_mem,
+    ioapic_error,
     map_error
   };
 
@@ -82,5 +83,6 @@ public:
   initialize(std::function<void(arch::interrupt_frame *)> irq);
   std::expected<void, error_code> arm_ns(std::uint64_t ns);
   std::expected<void, error_code> start(std::uint64_t deadline);
+  std::uint64_t now_ns();
 };
 } // namespace proc::timers
