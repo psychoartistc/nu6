@@ -6,7 +6,10 @@
 #include <cstddef>
 
 namespace proc {
+class cfs;
 class task {
+  friend class cfs;
+
 public:
   typedef void (*entry_function_t)(void *arg);
 
@@ -41,10 +44,19 @@ private:
   std::uint64_t m_sliceStart{0};
 
   entry_function_t m_entryFunction{nullptr};
-  void *arg{nullptr};
+  void *m_arg{nullptr};
 
-  std::bitset<FLAGS_COUNT> m_flags;
+  std::bitset<FLAGS_COUNT> m_flags{0};
 
 private:
+public:
+  std::uint64_t vruntime() const { return m_vruntime; }
 };
 } // namespace proc
+
+extern "C" {
+extern void task_switch(std::uint64_t *old, std::uint64_t newRsp);
+extern void task_trampoline(void);
+void task_first_run(void);
+void task_exit(void);
+}

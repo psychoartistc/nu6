@@ -7,7 +7,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <std/embedded_freelist.hpp>
+#include <std/freelist.hpp>
 #include <mm/slub_common.hpp>
 #include <string_view>
 #include <utility>
@@ -35,8 +35,8 @@ private:
   std::size_t m_capacity;
   Alloc m_alloc;
 
-  std::embedded_freelist m_freeStack{};
-  std::embedded_freelist m_spareSlabs{};
+  std::freelist m_freeStack{};
+  std::freelist m_spareSlabs{};
   std::atomic<slub_slab *> m_allSlabs{nullptr};
 
   std::atomic<std::uint32_t> m_activeOps{0};

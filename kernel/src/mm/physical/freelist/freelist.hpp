@@ -1,7 +1,7 @@
 #pragma once
 
 #include <mm/physical/page_allocator.hpp>
-#include <std/embedded_freelist.hpp>
+#include <std/freelist.hpp>
 #include <limine/requests.hpp>
 #include <mm/common.hpp>
 #include <utils/fmt.hpp>
@@ -17,7 +17,7 @@ private:
 
 private:
   logging::named_logger m_logger{"freelist_allocator"};
-  std::embedded_freelist m_freelist{};
+  std::freelist m_freelist{};
   std::atomic<std::uint64_t> m_totalFrames{0};
   std::atomic<std::uint64_t> m_freeFrames{0};
 

@@ -5,7 +5,7 @@
 
 namespace std {
 
-class embedded_freelist {
+class freelist {
 private:
   static inline constexpr std::uint64_t POINTER_MASK = 0x0000FFFFFFFFFFFFULL;
   static inline constexpr std::uint32_t TAG_SHIFT = 48;

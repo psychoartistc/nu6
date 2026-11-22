@@ -42,7 +42,7 @@ struct vma_less {
   }
 };
 
-// the kernel vma tree must use page_bump_allocator
+// the kernel vma tree must use the slub allocator (backed with phys mem)
 // userland processes should use the normal allocator
 template <class Allocator = std::allocator<vma>> class vma_tree {
 private:
