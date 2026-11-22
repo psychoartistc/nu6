@@ -41,14 +41,14 @@ void lapic::initialize(std::uintptr_t base) {
   s_mmio.change_address(vma->address);
 }
 
-void lapic::eoi() { write(LAPIC_EOI, 0); }
+void lapic::eoi() { write(EOI, 0); }
 
 void lapic::ipi_except_self(std::uint8_t vec) {
-  while (read(LAPIC_REG_ICR_LOW) & LAPIC_ICR_DELIVERY_STATUS)
+  while (read(REG_ICR_LOW) & ICR_DELIVERY_STATUS)
     arch::pause();
 
-  std::uint32_t licr = vec | (0 << 8) | LAPIC_ICR_SHORTHAND_ALL_BUT_SELF;
-  write(LAPIC_REG_ICR_LOW, licr);
+  std::uint32_t licr = vec | (0 << 8) | ICR_SHORTHAND_ALL_BUT_SELF;
+  write(REG_ICR_LOW, licr);
 }
 
 std::uintptr_t lapic::s_physBase{0x0};

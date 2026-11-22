@@ -30,7 +30,6 @@ void timer_source::tick_handler(arch::interrupt_frame *frame) {
   pr_info("hello! int no: %zu", frame->int_no);
 
   hardware::ctl::lapic::eoi();
-
   auto *curr = current();
   curr->next_deadline_set(1000000000);
 }

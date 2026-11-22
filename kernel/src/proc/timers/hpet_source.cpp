@@ -15,8 +15,7 @@ bool hpet_source::is_available() {
 }
 
 void hpet_source::start(std::uint64_t initialDeadline) {
-  auto res = m_hpet.initialize(
-      [](arch::interrupt_frame *f) { timer_source::tick_handler(f); });
+  auto res = m_hpet.initialize(timer_source::tick_handler);
 
   if (!res) {
     m_logger.warn("initialize() failed, falling back: %s",
