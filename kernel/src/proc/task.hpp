@@ -55,6 +55,7 @@ private:
   void *m_arg{nullptr};
 
   std::bitset<FLAGS_COUNT> m_flags{0};
+  bool m_bQueued{false};
 
 private:
 public:

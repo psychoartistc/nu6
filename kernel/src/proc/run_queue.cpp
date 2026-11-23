@@ -58,4 +58,43 @@ void run_queue::update_current_vdelta() {
   update_min_vruntime();
 }
 
+std::uint64_t run_queue::schedule_slice(const task *t) const {
+  std::uint32_t nr = m_nrRunning.load(std::memory_order_relaxed);
+  if (nr == 0)
+    nr = 1;
+
+  std::uint64_t period = cfs::LATENCY_NS;
+  if (nr > cfs::LATENCY_NS / cfs::MIN_GRAN_NS)
+    period = static_cast<std::uint64_t>(nr) * cfs::MIN_GRAN_NS;
+
+  // use the load weight if specified
+  std::uint64_t load = m_loadWeight ? m_loadWeight : t->m_weight;
+  std::uint64_t slice = period * t->m_weight / load;
+
+  // account for min gran ns
+  return slice < cfs::MIN_GRAN_NS ? cfs::MIN_GRAN_NS : slice;
+}
+
+void run_queue::account_in(task *t) {
+  m_nrRunning.fetch_add(1, std::memory_order_relaxed);
+  m_loadWeight += t->m_weight;
+}
+
+void run_queue::account_out(task *t) {
+  m_nrRunning.fetch_sub(1, std::memory_order_relaxed);
+  m_loadWeight -= t->m_weight;
+}
+
+void run_queue::enqueue_task(task *t) {
+  assert(!t->m_bQueued && "attempted to queue an already queued task");
+  m_tree.insert(t);
+  t->m_bQueued = true;
+}
+
+void run_queue::dequeue_task(task *t) {
+  assert(t->m_bQueued && "attempted to dequeue an already dequeued task");
+  m_tree.erase(t);
+  t->m_bQueued = false;
+}
+
 } // namespace proc
