@@ -1,4 +1,6 @@
 #include <proc/run_queue.hpp>
+#include <proc/timer_source.hpp>
+#include <proc/cfs.hpp>
 
 namespace proc {
 task *run_queue::largest_vruntime() {
@@ -35,4 +37,25 @@ void run_queue::update_min_vruntime() {
   if (have)
     m_minVruntime = std::max(min_vruntime(), candidate);
 }
+
+void run_queue::update_current_vdelta() {
+  task *c = current();
+  timer_source *t = timer_source::current();
+  if (!c || !t)
+    return;
+
+  std::uint64_t now = t->now_ns();
+
+  // shouldnt overflow
+  std::uint64_t delta = now - c->m_execStart;
+
+  c->m_execStart = delta;
+  if (!c->has_flag(task::flags::idle)) {
+    c->m_sumExec += delta;
+    c->m_vruntime += cfs::calculate_vdelta(delta, c->m_weight);
+  }
+
+  update_min_vruntime();
+}
+
 } // namespace proc

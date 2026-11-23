@@ -8,8 +8,10 @@
 
 namespace proc {
 class cfs;
+class run_queue;
 class task {
   friend class cfs;
+  friend class run_queue;
 
 public:
   typedef void (*entry_function_t)(void *arg);
