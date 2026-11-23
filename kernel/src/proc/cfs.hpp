@@ -1,5 +1,6 @@
 #pragma once
 
+#include <proc/run_queue.hpp>
 #include <cstdint>
 
 namespace proc {
@@ -29,5 +30,7 @@ public:
 
     return (delta_ns * NICE0_WEIGHT) / weight;
   }
+
+  void update_min_vruntime(run_queue &rq);
 };
 } // namespace proc

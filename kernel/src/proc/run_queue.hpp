@@ -8,11 +8,17 @@ struct task_less {
   using is_transparent = void;
 
   constexpr bool operator()(const task &a, const task &b) const noexcept {
-    return a.vruntime() < b.vruntime();
+    if (a.vruntime() != b.vruntime()) {
+      return a.vruntime() < b.vruntime();
+    }
+
+    return std::less<>()(std::addressof(a), std::addressof(b));
   }
+
   constexpr bool operator()(const task &a, std::uint64_t p) const noexcept {
     return a.vruntime() < p;
   }
+
   constexpr bool operator()(std::uint64_t p, const task &a) const noexcept {
     return p < a.vruntime();
   }
@@ -32,5 +38,18 @@ private:
 
   bool m_online{false};
   bool m_needResched{false};
+
+public:
+  task *largest_vruntime();
+  task *least_vruntime();
+
+  task *current() const { return m_current; }
+  task *idle() const { return m_idle; }
+  task *zombie() const { return m_zombie; }
+  task *sleepers() const { return m_sleepers; }
+
+  std::uint64_t min_vruntime() const { return m_minVruntime; }
+
+  void set_min_vruntime(std::uint64_t v);
 };
 } // namespace proc

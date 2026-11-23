@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <arch/stack.hpp>
 #include <bitset>
 #include <cstdint>
@@ -19,10 +20,15 @@ public:
     blocked,
     dead,
     sleeping,
-    user,
     idle,
+    user,
+
     block_req
   };
+
+  static inline constexpr std::array<flags, 5> STATES = {
+      flags::blocked, flags::dead, flags::ready, flags::sleeping,
+      flags::running};
 
   static inline constexpr int FLAGS_COUNT = static_cast<int>(flags::block_req);
 
@@ -50,7 +56,21 @@ private:
 
 private:
 public:
+  inline flags get_state() const {
+    for (const enum flags f : STATES)
+      if (has_flag(f))
+        return f;
+
+    return flags::dead;
+  }
+
   std::uint64_t vruntime() const { return m_vruntime; }
+
+  const std::bitset<FLAGS_COUNT> &flags() const { return m_flags; }
+
+  bool has_flag(enum flags fl) const {
+    return m_flags.test(static_cast<int>(fl));
+  }
 };
 } // namespace proc
 
