@@ -50,6 +50,7 @@ public:
 
   std::uint64_t min_vruntime() const { return m_minVruntime; }
 
-  void set_min_vruntime(std::uint64_t v);
+  void update_min_vruntime();
+  void update_current_vdelta();
 };
 } // namespace proc
